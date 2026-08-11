@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Swimmer Progress Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card: #fff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #dbe3ee;
+        --accent: #1976d2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: 0 2px 9px rgba(0, 0, 0, 0.08);
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 1.75rem;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+      }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px 24px;
+        align-items: end;
+      }
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      label {
+        font-weight: 700;
+      }
+      select {
+        min-width: 165px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: #fff;
+      }
+      .chart-wrap {
+        height: 420px;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 8px;
+      }
+      .distance-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 14px;
+      }
+      .distance-tab {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        padding: 8px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .distance-tab:hover {
+        background: #eef5ff;
+      }
+      .distance-tab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        border: 1px solid #e5e7eb;
+        padding: 9px 10px;
+        text-align: left;
+      }
+      th {
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      tbody tr:nth-child(even) {
+        background: #f9fafb;
+      }
+      .sort-arrow {
+        margin-left: 5px;
+        font-size: 0.8em;
+      }
+      .pb-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .pb-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 14px;
+      }
+      .pb-card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        background: #fbfdff;
+      }
+      .pb-title {
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .pb-time {
+        font-size: 1.7rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+      .pb-meta {
+        font-size: 0.9rem;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+      .empty {
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .swimmer-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .swimmer-tab {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        padding: 9px 16px;
+        border-radius: 9px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .swimmer-tab:hover { background: #eef5ff; }
+      .swimmer-tab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      @media (max-width: 700px) {
+        body {
+          padding: 10px;
+        }
+        .chart-wrap {
+          height: 340px;
+        }
+        table {
+          font-size: 0.85rem;
+        }
+        th,
+        td {
+          padding: 7px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="swimmer-tabs" aria-label="Swimmer tabs">
+        <button class="swimmer-tab active" data-swimmer="sofia">Sofia Li</button>
+        <button class="swimmer-tab" data-swimmer="noah">Noah Lau</button>
+      </div>
+
+      <div class="card">
+        <h1>&#129416; <span id="activeSwimmerName">Sofia Li</span> Swimmer Progress Dashboard</h1>
+        <div class="filters">
+          <div class="filter-group">
+            <label for="year">Year</label
+            ><select id="year"></select>
+          </div>
+          <div class="filter-group">
+            <label for="stroke">Stroke</label
+            ><select id="stroke">
+              <option value="All">All</option>
+              <option value="Freestyle">Freestyle</option>
+              <option value="Back Stroke">Back Stroke</option>
+              <option value="Breast Stroke">Breast Stroke</option>
+              <option value="Butterfly">Butterfly</option>
+              <option value="Individual Medley">IM</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="distance">Distance</label
+            ><select id="distance">
+              <option value="All">All</option>
+              <option value="25M">25M</option>
+              <option value="50M">50M</option>
+              <option value="100M">100M</option>
+              <option value="200M">200M</option>
+            </select>
+          </div>
+        </div>
+        <div class="note">
+          Selecting a year displays every record from that year. Stroke and
+          distance narrow the selected year's records.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Progress by Stroke</h2>
+        <div class="distance-tabs" id="distanceTabs" aria-label="Distance tabs">
+          <button class="distance-tab active" data-distance="All">
+            All Distances
+          </button>
+          <button class="distance-tab" data-distance="25M">25M</button>
+          <button class="distance-tab" data-distance="50M">50M</button>
+          <button class="distance-tab" data-distance="100M">100M</button>
+          <button class="distance-tab" data-distance="200M">200M</button>
+        </div>
+        <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
+        <div class="note">
+          Use the distance tabs to switch the chart. Each stroke with matching
+          data appears as a separate line. Lower times are faster.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Historical Data</h2>
+        <div style="overflow-x: auto">
+          <table id="historyTable">
+            <thead>
+              <tr>
+                <th data-field="date">Date <span class="sort-arrow"></span></th>
+                <th data-field="year">Year <span class="sort-arrow"></span></th>
+                <th data-field="stroke">
+                  Stroke <span class="sort-arrow"></span>
+                </th>
+                <th data-field="distance">
+                  Distance <span class="sort-arrow"></span>
+                </th>
+                <th data-field="time">
+                  Time (sec) <span class="sort-arrow"></span>
+                </th>
+                <th data-field="meet">Meet <span class="sort-arrow"></span></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="note">
+          Click any column heading to sort ascending or descending.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Personal Bests</h2>
+        <div class="pb-controls">
+          <div class="filter-group">
+            <label for="pbScope">Personal Best Scope</label
+            ><select id="pbScope">
+              <option value="Lifetime">Lifetime Personal Best</option>
+              <option value="SelectedYear">Best in Selected Year</option>
+            </select>
+          </div>
+        </div>
+        <div id="pbGrid" class="pb-grid"></div>
+        <div class="note">
+          Lifetime mode uses every result. Selected-year mode uses the current
+          Year filter.
+        </div>
+      </div>
+    </div>
+    <script>
+// RFTW_DATA_START
+const swimmerData = {
+  "sofia": {
+    "name": "Sofia Li",
+    "sourceUrl": "https://reachforthewall.org/swimmer-stats/?sid=Li,Sofia381062500",
+    "sourcePdf": "Swimmer Stats – Sofia.pdf",
+    "records": [
+      {
+        "date": "2026-06-13",
+        "year": 2026,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 51.0,
+        "meet": "Eldwick Sharks",
+        "age": 6
+      },
+      {
+        "date": "2026-06-13",
+        "year": 2026,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 45.19,
+        "meet": "Eldwick Sharks",
+        "age": 6
+      },
+      {
+        "date": "2026-06-27",
+        "year": 2026,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 35.45,
+        "meet": "Upper County Dolphins",
+        "age": 6
+      },
+      {
+        "date": "2026-06-27",
+        "year": 2026,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 32.72,
+        "meet": "Upper County Dolphins",
+        "age": 6
+      },
+      {
+        "date": "2026-07-04",
+        "year": 2026,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 40.27,
+        "meet": "Eldwick Sharks",
+        "age": 6
+      },
+      {
+        "date": "2026-07-04",
+        "year": 2026,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 36.31,
+        "meet": "Eldwick Sharks",
+        "age": 6
+      },
+      {
+        "date": "2026-07-11",
+        "year": 2026,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 35.93,
+        "meet": "Kemp Mill Kangaroos",
+        "age": 6
+      },
+      {
+        "date": "2026-07-11",
+        "year": 2026,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 30.85,
+        "meet": "Kemp Mill Kangaroos",
+        "age": 6
+      },
+      {
+        "date": "2026-07-18",
+        "year": 2026,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 34.13,
+        "meet": "Division O Championship",
+        "age": 6
+      },
+      {
+        "date": "2026-07-18",
+        "year": 2026,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 30.5,
+        "meet": "Division O Championship",
+        "age": 6
+      }
+    ]
+  },
+  "noah": {
+    "name": "Noah Lau",
+    "sourceUrl": "https://reachforthewall.org/swimmer-stats/?sid=Lau,NoahM349335000",
+    "sourcePdf": "Swimmer Stats – Noah.pdf",
+    "records": [
+      {
+        "date": "2023-06-24",
+        "year": 2023,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 31.03,
+        "meet": "Woodley Warriors",
+        "age": 8
+      },
+      {
+        "date": "2023-06-24",
+        "year": 2023,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 30.07,
+        "meet": "Woodley Warriors",
+        "age": 8
+      },
+      {
+        "date": "2023-07-01",
+        "year": 2023,
+        "stroke": "Freestyle",
+        "distance": "25M",
+        "time": 26.81,
+        "meet": "Riverside Gardens",
+        "age": 8
+      },
+      {
+        "date": "2023-07-22",
+        "year": 2023,
+        "stroke": "Back Stroke",
+        "distance": "25M",
+        "time": 30.44,
+        "meet": "Division 13 Championship",
+        "age": 8
+      },
+      {
+        "date": "2024-06-15",
+        "year": 2024,
+        "stroke": "Back Stroke",
+        "distance": "50M",
+        "time": 66.75,
+        "meet": "Brookfield Breakers",
+        "age": 9
+      },
+      {
+        "date": "2024-06-15",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 28.26,
+        "meet": "Brookfield Breakers",
+        "age": 9
+      },
+      {
+        "date": "2024-06-22",
+        "year": 2024,
+        "stroke": "Back Stroke",
+        "distance": "50M",
+        "time": 67.38,
+        "meet": "Truro Homes Association Swordf",
+        "age": 9
+      },
+      {
+        "date": "2024-06-22",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 28.94,
+        "meet": "Truro Homes Association Swordf",
+        "age": 9
+      },
+      {
+        "date": "2024-06-29",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 26.21,
+        "meet": "Mosby Woods Mustangs",
+        "age": 9
+      },
+      {
+        "date": "2024-06-29",
+        "year": 2024,
+        "stroke": "Freestyle",
+        "distance": "50M",
+        "time": 55.14,
+        "meet": "Mosby Woods Mustangs",
+        "age": 9
+      },
+      {
+        "date": "2024-07-06",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 25.13,
+        "meet": "Brookfield Breakers",
+        "age": 9
+      },
+      {
+        "date": "2024-07-06",
+        "year": 2024,
+        "stroke": "Freestyle",
+        "distance": "50M",
+        "time": 47.96,
+        "meet": "Brookfield Breakers",
+        "age": 9
+      },
+      {
+        "date": "2024-07-13",
+        "year": 2024,
+        "stroke": "Back Stroke",
+        "distance": "50M",
+        "time": 61.94,
+        "meet": "Daventry Dolphins",
+        "age": 9
+      },
+      {
+        "date": "2024-07-13",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 24.69,
+        "meet": "Daventry Dolphins",
+        "age": 9
+      },
+      {
+        "date": "2024-07-20",
+        "year": 2024,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 23.34,
+        "meet": "Division 11 Championship",
+        "age": 9
+      },
+      {
+        "date": "2025-06-14",
+        "year": 2025,
+        "stroke": "Breast Stroke",
+        "distance": "50M",
+        "time": 57.34,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-06-14",
+        "year": 2025,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 20.58,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-06-21",
+        "year": 2025,
+        "stroke": "Breast Stroke",
+        "distance": "50M",
+        "time": 55.08,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-06-21",
+        "year": 2025,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 20.23,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-06-28",
+        "year": 2025,
+        "stroke": "Back Stroke",
+        "distance": "50M",
+        "time": 49.06,
+        "meet": "Burke Station Destroyers",
+        "age": 10
+      },
+      {
+        "date": "2025-07-05",
+        "year": 2025,
+        "stroke": "Back Stroke",
+        "distance": "50M",
+        "time": 48.26,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-07-05",
+        "year": 2025,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 18.71,
+        "meet": "Brookfield Breakers",
+        "age": 10
+      },
+      {
+        "date": "2025-07-12",
+        "year": 2025,
+        "stroke": "Butterfly",
+        "distance": "25M",
+        "time": 18.72,
+        "meet": "Holmes Run Acres Hurricanes",
+        "age": 10
+      },
+      {
+        "date": "2025-07-12",
+        "year": 2025,
+        "stroke": "Freestyle",
+        "distance": "50M",
+        "time": 37.82,
+        "meet": "Holmes Run Acres Hurricanes",
+        "age": 10
+      }
+    ]
+  }
+};
+const dataLastSynced = "2026-08-11 09:57:39";
+// RFTW_DATA_END
+
+      const strokeOrder = ["Freestyle", "Back Stroke", "Breast Stroke", "Butterfly", "Individual Medley"];
+      const colors = {
+        Freestyle: "#1976d2",
+        "Back Stroke": "#7b1fa2",
+        "Breast Stroke": "#2e7d32",
+        Butterfly: "#ef6c00",
+        "Individual Medley": "#c2185b",
+      };
+      let activeSwimmer = "sofia";
+      let chart;
+      let sortState = { field: "date", direction: "asc" };
+
+      function profile() { return swimmerData[activeSwimmer] || {name: activeSwimmer, records: []}; }
+      function data() { return profile().records || []; }
+      function formatDate(iso) { const [y,m,d] = iso.split("-"); return `${m}-${d}-${y}`; }
+      function distanceSortValue(d) { const m=String(d).match(/^(\d+)([MY])$/); if(!m) return 999999; return Number(m[1]) + (m[2]==="Y" ? 10000 : 0); }
+
+      function buildYearFilter() {
+        const years=[...new Set(data().map(r=>r.year))].sort((a,b)=>a-b);
+        document.getElementById("year").innerHTML='<option value="All">All</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join("");
+      }
+      function buildDistanceFilterAndTabs() {
+        const distances=[...new Set(data().map(r=>r.distance))].sort((a,b)=>distanceSortValue(a)-distanceSortValue(b));
+        const select=document.getElementById("distance");
+        select.innerHTML='<option value="All">All</option>'+["25M","50M","100M","200M",...distances].filter((v,i,a)=>a.indexOf(v)===i).map(d=>`<option value="${d}">${d}</option>`).join("");
+        const tabs=document.getElementById("distanceTabs");
+        tabs.innerHTML='<button class="distance-tab active" data-distance="All">All Distances</button>'+distances.map(d=>`<button class="distance-tab" data-distance="${d}">${d}</button>`).join("");
+        tabs.querySelectorAll(".distance-tab").forEach(btn=>btn.addEventListener("click",()=>{ select.value=btn.dataset.distance; renderAll(); }));
+      }
+      function filteredRecords() {
+        const year=document.getElementById("year").value, stroke=document.getElementById("stroke").value, distance=document.getElementById("distance").value;
+        return data().filter(r=>(year==="All"||String(r.year)===year)&&(stroke==="All"||r.stroke===stroke)&&(distance==="All"||r.distance===distance));
+      }
+      function compare(a,b,field) {
+        if(field==="date") return new Date(a.date+"T00:00:00")-new Date(b.date+"T00:00:00");
+        if(field==="year"||field==="time") return Number(a[field])-Number(b[field]);
+        if(field==="distance") return distanceSortValue(a.distance)-distanceSortValue(b.distance);
+        return String(a[field]).localeCompare(String(b[field]),undefined,{numeric:true,sensitivity:"base"});
+      }
+      function renderTable() {
+        const tbody=document.querySelector("#historyTable tbody");
+        const rows=[...filteredRecords()].sort((a,b)=>{const result=compare(a,b,sortState.field); return sortState.direction==="asc"?result:-result;});
+        tbody.innerHTML="";
+        if(!rows.length) tbody.innerHTML='<tr><td colspan="6" class="empty">No records match the selected filters.</td></tr>';
+        else rows.forEach(r=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${formatDate(r.date)}</td><td>${r.year}</td><td>${r.stroke}</td><td>${r.distance}</td><td>${r.time.toFixed(2)}</td><td>${r.meet}</td>`;tbody.appendChild(tr);});
+        document.querySelectorAll("th[data-field]").forEach(th=>{th.querySelector(".sort-arrow").textContent=th.dataset.field===sortState.field?(sortState.direction==="asc"?"▲":"▼"):"";});
+      }
+      function renderChart() {
+        const filtered=filteredRecords();
+        const strokes=strokeOrder.filter(s=>filtered.some(r=>r.stroke===s));
+        const labels=[...new Set(filtered.map(r=>r.date))].sort((a,b)=>new Date(a)-new Date(b)).map(formatDate);
+        const datasets=strokes.map(stroke=>{const rows=filtered.filter(r=>r.stroke===stroke).sort((a,b)=>new Date(a.date)-new Date(b.date));return {label:stroke,data:rows.map(r=>({x:formatDate(r.date),y:r.time,meet:r.meet,distance:r.distance})),parsing:false,borderColor:colors[stroke],backgroundColor:colors[stroke],tension:.2,fill:false,pointRadius:5,pointHoverRadius:7};});
+        if(chart) chart.destroy();
+        chart=new Chart(document.getElementById("progressChart"),{type:"line",data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:false,interaction:{mode:"nearest",intersect:false},plugins:{legend:{display:true,position:"top"},tooltip:{callbacks:{title:items=>items.length?items[0].raw.x:"",label:item=>{const p=item.raw;return `${item.dataset.label}: ${p.y.toFixed(2)} sec — ${p.distance} — ${p.meet}`;}}}},scales:{x:{type:"category",labels,title:{display:true,text:"Meet Date (MM-DD-YYYY)"}},y:{reverse:true,title:{display:true,text:"Time in Seconds (Lower Is Faster)"}}}}});
+      }
+      function renderPersonalBests() {
+        const scope=document.getElementById("pbScope").value, selectedYear=document.getElementById("year").value;
+        let source=(scope==="Lifetime"||selectedYear==="All")?[...data()]:data().filter(r=>String(r.year)===selectedYear);
+        const stroke=document.getElementById("stroke").value,distance=document.getElementById("distance").value;
+        source=source.filter(r=>(stroke==="All"||r.stroke===stroke)&&(distance==="All"||r.distance===distance));
+        const groups={}; source.forEach(r=>{const key=`${r.stroke}|${r.distance}`;if(!groups[key]||r.time<groups[key].time)groups[key]=r;});
+        const cards=Object.values(groups).sort((a,b)=>{const s=strokeOrder.indexOf(a.stroke)-strokeOrder.indexOf(b.stroke);return s!==0?s:distanceSortValue(a.distance)-distanceSortValue(b.distance);});
+        const grid=document.getElementById("pbGrid");grid.innerHTML="";
+        if(!cards.length){grid.innerHTML='<div class="empty">No personal-best records match the selected filters.</div>';return;}
+        cards.forEach(r=>{const card=document.createElement("div");card.className="pb-card";card.innerHTML=`<div class="pb-title">${r.stroke} · ${r.distance}</div><div class="pb-time">${r.time.toFixed(2)} sec</div><div class="pb-meta">${r.meet}<br>${formatDate(r.date)}<br>${scope==="SelectedYear"&&selectedYear!=="All"?selectedYear+" PB":"Lifetime PB"}</div>`;grid.appendChild(card);});
+      }
+      function syncTabs() { const current=document.getElementById("distance").value;document.querySelectorAll(".distance-tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.distance===current)); }
+      function renderAll() { syncTabs(); document.getElementById("activeSwimmerName").textContent=profile().name; renderChart(); renderTable(); renderPersonalBests(); }
+      function switchSwimmer(key) {
+        activeSwimmer=key;
+        document.querySelectorAll(".swimmer-tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.swimmer===key));
+        document.getElementById("stroke").value="All";
+        buildYearFilter(); buildDistanceFilterAndTabs(); document.getElementById("distance").value="All"; renderAll();
+      }
+
+      ["year","stroke","distance","pbScope"].forEach(id=>document.getElementById(id).addEventListener("change",renderAll));
+      document.querySelectorAll(".swimmer-tab").forEach(btn=>btn.addEventListener("click",()=>switchSwimmer(btn.dataset.swimmer)));
+      document.querySelectorAll("th[data-field]").forEach(th=>th.addEventListener("click",()=>{const field=th.dataset.field;if(sortState.field===field)sortState.direction=sortState.direction==="asc"?"desc":"asc";else{sortState.field=field;sortState.direction="asc";}renderTable();}));
+      buildYearFilter(); buildDistanceFilterAndTabs(); renderAll();
+    </script>
+  </body>
+</html>
