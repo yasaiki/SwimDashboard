@@ -625,7 +625,7 @@ const swimmerData = {
     ]
   }
 };
-const dataLastSynced = "2026-08-11 09:57:39";
+const dataLastSynced = "2026-08-11 13:49:57";
 // RFTW_DATA_END
 
       const strokeOrder = ["Freestyle", "Back Stroke", "Breast Stroke", "Butterfly", "Individual Medley"];
@@ -677,11 +677,52 @@ const dataLastSynced = "2026-08-11 09:57:39";
       }
       function renderChart() {
         const filtered=filteredRecords();
-        const strokes=strokeOrder.filter(s=>filtered.some(r=>r.stroke===s));
         const labels=[...new Set(filtered.map(r=>r.date))].sort((a,b)=>new Date(a)-new Date(b)).map(formatDate);
-        const datasets=strokes.map(stroke=>{const rows=filtered.filter(r=>r.stroke===stroke).sort((a,b)=>new Date(a.date)-new Date(b.date));return {label:stroke,data:rows.map(r=>({x:formatDate(r.date),y:r.time,meet:r.meet,distance:r.distance})),parsing:false,borderColor:colors[stroke],backgroundColor:colors[stroke],tension:.2,fill:false,pointRadius:5,pointHoverRadius:7};});
+
+        // Treat each stroke + distance combination as a separate series.
+        // This prevents 25M and 50M swims of the same stroke from being connected
+        // into one misleading line when All Distances is selected.
+        const seriesKeys=[...new Set(filtered.map(r=>`${r.stroke}|${r.distance}`))]
+          .sort((a,b)=>{
+            const [strokeA,distanceA]=a.split('|');
+            const [strokeB,distanceB]=b.split('|');
+            const strokeDiff=strokeOrder.indexOf(strokeA)-strokeOrder.indexOf(strokeB);
+            return strokeDiff!==0?strokeDiff:distanceSortValue(distanceA)-distanceSortValue(distanceB);
+          });
+
+        // Distinct palette by stroke-distance series. Same stroke at another distance
+        // deliberately receives a different color.
+        const seriesPalette=[
+          '#1976d2','#42a5f5','#0d47a1','#90caf9',
+          '#7b1fa2','#ab47bc','#4a148c','#ce93d8',
+          '#2e7d32','#66bb6a','#1b5e20','#a5d6a7',
+          '#ef6c00','#ffa726','#e65100','#ffcc80',
+          '#c2185b','#ec407a','#880e4f','#f48fb1',
+          '#00838f','#26c6da','#006064','#80deea'
+        ];
+
+        const datasets=seriesKeys.map((key,index)=>{
+          const [stroke,distance]=key.split('|');
+          const rows=filtered
+            .filter(r=>r.stroke===stroke && r.distance===distance)
+            .sort((a,b)=>new Date(a.date)-new Date(b.date));
+          const color=seriesPalette[index % seriesPalette.length];
+          return {
+            label:`${stroke} · ${distance}`,
+            data:rows.map(r=>({x:formatDate(r.date),y:r.time,meet:r.meet,distance:r.distance})),
+            parsing:false,
+            borderColor:color,
+            backgroundColor:color,
+            tension:0.2,
+            fill:false,
+            pointRadius:5,
+            pointHoverRadius:7,
+            spanGaps:false
+          };
+        });
+
         if(chart) chart.destroy();
-        chart=new Chart(document.getElementById("progressChart"),{type:"line",data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:false,interaction:{mode:"nearest",intersect:false},plugins:{legend:{display:true,position:"top"},tooltip:{callbacks:{title:items=>items.length?items[0].raw.x:"",label:item=>{const p=item.raw;return `${item.dataset.label}: ${p.y.toFixed(2)} sec — ${p.distance} — ${p.meet}`;}}}},scales:{x:{type:"category",labels,title:{display:true,text:"Meet Date (MM-DD-YYYY)"}},y:{reverse:true,title:{display:true,text:"Time in Seconds (Lower Is Faster)"}}}}});
+        chart=new Chart(document.getElementById("progressChart"),{type:"line",data:{datasets},options:{responsive:true,maintainAspectRatio:false,parsing:false,interaction:{mode:"nearest",intersect:false},plugins:{legend:{display:true,position:"top"},tooltip:{callbacks:{title:items=>items.length?items[0].raw.x:"",label:item=>{const p=item.raw;return `${item.dataset.label}: ${p.y.toFixed(2)} sec — ${p.meet}`;}}}},scales:{x:{type:"category",labels,title:{display:true,text:"Meet Date (MM-DD-YYYY)"}},y:{reverse:true,title:{display:true,text:"Time in Seconds (Lower Is Faster)"}}}}});
       }
       function renderPersonalBests() {
         const scope=document.getElementById("pbScope").value, selectedYear=document.getElementById("year").value;
