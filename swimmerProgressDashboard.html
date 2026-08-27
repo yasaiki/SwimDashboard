@@ -267,6 +267,39 @@
       .pager select { min-width:80px; padding:6px 8px; }
       .page-info { color:var(--muted); font-size:.9rem; }
 
+      .standard-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 0.78rem;
+        color: #fff;
+        letter-spacing: 0.02em;
+        cursor: default;
+      }
+      .sb-B { background: #9e9e9e; }
+      .sb-BB { background: #78909c; }
+      .sb-A { background: #42a5f5; }
+      .sb-AA { background: #26a69a; }
+      .sb-AAA { background: #7e57c2; }
+      .sb-AAAA { background: #f9a825; color: #3a2c00; }
+      .sb-none { background: #cfd8dc; color: #445; }
+      .standard-next {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .standards-note {
+        background: #fff8e1;
+        border: 1px solid #ffe0a3;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 0.87rem;
+        color: #6b5200;
+        margin-bottom: 12px;
+        line-height: 1.45;
+      }
+
       @media (max-width: 700px) {
         body {
           padding: 10px;
@@ -371,6 +404,14 @@
       </details>
 
       <details class="card collapsible" open>
+        <summary><h2>Age-Group Standards</h2></summary>
+        <div class="section-body">
+          <div class="standards-note" id="standardsNote"></div>
+          <div id="standardsReference"></div>
+        </div>
+      </details>
+
+      <details class="card collapsible" open>
         <summary><h2>Stroke Radar Chart</h2></summary>
         <div class="section-body">
           <div class="radar-wrap"><canvas id="strokeRadarChart"></canvas></div>
@@ -403,6 +444,7 @@
                   <th data-field="time">
                     Time (sec) <span class="sort-arrow"></span>
                   </th>
+                  <th>Standard</th>
                   <th data-field="meet">
                     Meet <span class="sort-arrow"></span>
                   </th>
@@ -430,7 +472,8 @@
             </div>
           </div>
           <div class="note">
-            Click any column heading to sort ascending or descending.
+            Click any column heading to sort ascending or descending. Hover a
+            Standard badge to see how far away the next level is.
           </div>
         </div>
       </details>
@@ -456,12 +499,18 @@
       </details>
 
       <details class="card collapsible">
-        <summary><h2>Goal JSON Reference</h2></summary>
+        <summary><h2>Goal &amp; Standards JSON Reference</h2></summary>
         <div class="section-body">
           <div class="json-hint">
             Edit the &lt;script type="application/json" id="dashboardConfig"&gt;
-            block in this file. Each goal uses: swimmer key → stroke → distance
-            → target seconds → label.
+            block in this file. Goals use: swimmer key → stroke → distance →
+            target seconds → label. Age-group standards use: gender ("F"/"M")
+            → stroke → distance → age-bracket key → level → cutoff seconds,
+            plus top-level <code>ageBrackets</code> (min/max age per bracket
+            key) and <code>standardsLevels</code> (ordered easiest to
+            hardest). Each swimmer's <code>gender</code> field (in the
+            swimmerData object above) determines which half of the standards
+            table they're compared against.
           </div>
         </div>
       </details>
@@ -472,6 +521,7 @@
       const swimmerData = {
         sofia: {
           name: "Sofia Li",
+          gender: "F",
           sourceUrl:
             "https://reachforthewall.org/swimmer-stats/?sid=Li,Sofia381062500",
           sourcePdf: "Swimmer Stats – Sofia.pdf",
@@ -570,6 +620,7 @@
         },
         noah: {
           name: "Noah Lau",
+          gender: "M",
           sourceUrl:
             "https://reachforthewall.org/swimmer-stats/?sid=Lau,NoahM349335000",
           sourcePdf: "Swimmer Stats – Noah.pdf",
@@ -907,7 +958,7 @@
       // RFTW_DATA_END
     </script>
 
-    <!-- EDITABLE DASHBOARD JSON: update/add goals here. This block is not replaced by the ReachForTheWall sync script. -->
+    <!-- EDITABLE DASHBOARD JSON: update/add goals and standards here. This block is not replaced by the ReachForTheWall sync script. -->
     <script type="application/json" id="dashboardConfig">
       {
         "goals": {
@@ -962,6 +1013,12 @@
               "target": 16.0,
               "label": "Development Goal"
             },
+            {
+              "stroke": "Butterfly",
+              "distance": "50M",
+              "target": 33.5,
+              "label": "Next Goal"
+            },
              {
               "stroke": "Individual Medley",
               "distance": "100M",
@@ -969,6 +1026,127 @@
               "label": "Next Goal"
             }
           ]
+        },
+        "standardsLevels": ["B", "BB", "A", "AA", "AAA", "AAAA"],
+        "ageBrackets": [
+          { "key": "10U", "maxAge": 10 },
+          { "key": "11-12", "minAge": 11, "maxAge": 12 },
+          { "key": "13-14", "minAge": 13, "maxAge": 14 }
+        ],
+        "standardsSource": "USA Swimming Motivational Time Standards, 2024-2028, SCM course",
+        "standards": {
+          "F": {
+            "Freestyle": {
+              "50M": { "B": 43.99, "BB": 39.79, "A": 35.49, "AA": 34.09, "AAA": 32.69, "AAAA": "10U" },
+              "100M": { "B": 100.29, "BB": 89.69, "A": 78.99, "AA": 75.39, "AAA": 71.89, "AAAA": 68.29 },
+              "200M": { "B": 223.99, "BB": 199.49, "A": 174.99, "AA": 166.79, "AAA": 158.59, "AAAA": 150.39 },
+              "400M": { "B": 452.19, "BB": 406.89, "A": 361.69, "AA": 346.69, "AAA": 331.59, "AAAA": 316.49 }
+            },
+            "Back Stroke": {
+              "50M": { "B": 53.69, "BB": 47.79, "A": 41.89, "AA": 39.99, "AAA": 37.99, "AAAA": 36.09 },
+              "100M": { "B": 116.89, "BB": 103.89, "A": 90.89, "AA": 86.59, "AAA": 82.29, "AAAA": 77.99 }
+            },
+            "Breast Stroke": {
+              "50M": { "B": 60.29, "BB": 53.79, "A": 47.29, "AA": 45.09, "AAA": 42.99, "AAAA": 40.79 },
+              "100M": { "B": 132.89, "BB": 118.19, "A": 103.39, "AA": 98.49, "AAA": 93.59, "AAAA": 88.69 }
+            },
+            "Butterfly": {
+              "50M": { "B": 53.49, "BB": 47.19, "A": 40.89, "AA": 38.79, "AAA": 36.69, "AAAA": 34.59 },
+              "100M": { "B": 128.89, "BB": 112.09, "A": 95.19, "AA": 89.49, "AAA": 83.89, "AAAA": 78.29 }
+            },
+            "Individual Medley": {
+              "100M": { "B": 115.19, "BB": 102.99, "A": 90.69, "AA": 86.59, "AAA": 82.49, "AAAA": 78.39 },
+              "200M": { "B": 245.39, "BB": 219.59, "A": 193.89, "AA": 185.29, "AAA": 176.79, "AAAA": 168.19 }
+            }
+          },
+          "M": {
+            "Freestyle": {
+              "25M": { "10U": { "B": 50, "BB": 42, "A": 36, "AA": 32, "AAA": 29, "AAAA": 26 } },
+              "50M": {
+                "10U": { "B": 70, "BB": 60, "A": 52, "AA": 46, "AAA": 40, "AAAA": 35 },
+                "11-12": { "B": 36.29, "BB": 33.69, "A": 31.09, "AA": 29.79, "AAA": 28.49, "AAAA": 27.19 },
+                "13-14": { "B": 32.99, "BB": 30.69, "A": 28.29, "AA": 27.09, "AAA": 25.89, "AAAA": 24.79 }
+              },
+              "100M": {
+                "11-12": { "B": 78.99, "BB": 73.29, "A": 67.69, "AA": 64.89, "AAA": 62.09, "AAAA": 59.19 },
+                "13-14": { "B": 71.79, "BB": 66.69, "A": 61.49, "AA": 58.99, "AAA": 56.39, "AAAA": 53.89 }
+              },
+              "200M": {
+                "11-12": { "B": 172.39, "BB": 160.09, "A": 147.79, "AA": 141.59, "AAA": 135.49, "AAAA": 129.29 },
+                "13-14": { "B": 157.49, "BB": 146.19, "A": 134.99, "AA": 129.39, "AAA": 123.69, "AAAA": 118.09 }
+              },
+              "400M": {
+                "11-12": { "B": 367.49, "BB": 341.19, "A": 314.99, "AA": 301.79, "AAA": 288.69, "AAAA": 275.59 },
+                "13-14": { "B": 337.49, "BB": 313.39, "A": 289.29, "AA": 277.29, "AAA": 265.19, "AAAA": 253.19 }
+              },
+              "800M": {
+                "11-12": { "B": 773.09, "BB": 717.89, "A": 662.59, "AA": 634.99, "AAA": 607.39, "AAAA": 579.79 },
+                "13-14": { "B": 698.19, "BB": 648.39, "A": 598.59, "AA": 573.59, "AAA": 548.59, "AAAA": 523.69 }
+              },
+              "1500M": {
+                "11-12": { "B": 1458.89, "BB": 1354.69, "A": 1250.49, "AA": 1198.39, "AAA": 1146.29, "AAAA": 1094.19 },
+                "13-14": { "B": 1334.89, "BB": 1239.49, "A": 1144.19, "AA": 1096.49, "AAA": 1048.79, "AAAA": 1001.19 }
+              }
+            },
+            "Back Stroke": {
+              "25M": { "10U": { "B": 55, "BB": 46, "A": 39, "AA": 34, "AAA": 30, "AAAA": 27 } },
+              "50M": {
+                "10U": { "B": 85, "BB": 75, "A": 67, "AA": 60, "AAA": 53, "AAAA": 47 },
+                "11-12": { "B": 42.59, "BB": 39.29, "A": 36.09, "AA": 34.49, "AAA": 32.79, "AAAA": 31.19 },
+                "13-14": { "B": 37.19, "BB": 34.59, "A": 31.89, "AA": 30.59, "AAA": 29.19, "AAAA": 27.89 }
+              },
+              "100M": {
+                "11-12": { "B": 90.79, "BB": 83.69, "A": 76.49, "AA": 72.89, "AAA": 69.39, "AAAA": 65.79 },
+                "13-14": { "B": 78.79, "BB": 73.09, "A": 67.49, "AA": 64.69, "AAA": 61.89, "AAAA": 59.09 }
+              },
+              "200M": {
+                "11-12": { "B": 190.99, "BB": 177.39, "A": 163.69, "AA": 156.89, "AAA": 150.09, "AAAA": 143.29 },
+                "13-14": { "B": 170.99, "BB": 158.69, "A": 146.49, "AA": 140.39, "AAA": 134.29, "AAAA": 128.19 }
+              }
+            },
+            "Breast Stroke": {
+              "25M": { "10U": { "B": 50, "BB": 42, "A": 37, "AA": 33, "AAA": 29, "AAAA": 25 } },
+              "50M": {
+                "10U": { "B": 80, "BB": 68, "A": 60, "AA": 53, "AAA": 47, "AAAA": 42 },
+                "11-12": { "B": 48.09, "BB": 44.29, "A": 40.49, "AA": 38.59, "AAA": 36.69, "AAAA": 34.89 },
+                "13-14": { "B": 42.59, "BB": 39.59, "A": 36.49, "AA": 34.99, "AAA": 33.49, "AAAA": 31.99 }
+              },
+              "100M": {
+                "11-12": { "B": 102.29, "BB": 94.49, "A": 86.69, "AA": 82.79, "AAA": 78.89, "AAAA": 74.99 },
+                "13-14": { "B": 88.99, "BB": 82.59, "A": 76.29, "AA": 73.09, "AAA": 69.89, "AAAA": 66.79 }
+              },
+              "200M": {
+                "11-12": { "B": 217.09, "BB": 201.59, "A": 186.09, "AA": 178.29, "AAA": 170.59, "AAAA": 162.79 },
+                "13-14": { "B": 193.19, "BB": 179.39, "A": 165.59, "AA": 158.69, "AAA": 151.79, "AAAA": 144.89 }
+              }
+            },
+            "Butterfly": {
+              "25M": { "10U": { "B": 32, "BB": 27, "A": 23, "AA": 20, "AAA": 18, "AAAA": 16 } },
+              "50M": {
+                "11-12": { "B": 40.99, "BB": 37.69, "A": 34.49, "AA": 32.79, "AAA": 31.19, "AAAA": 29.59 },
+                "13-14": { "B": 36.59, "BB": 33.99, "A": 31.39, "AA": 30.09, "AAA": 28.79, "AAAA": 27.49 }
+              },
+              "100M": {
+                "11-12": { "B": 91.59, "BB": 84.09, "A": 76.49, "AA": 72.79, "AAA": 68.99, "AAAA": 65.29 },
+                "13-14": { "B": 77.89, "BB": 72.29, "A": 66.79, "AA": 63.99, "AAA": 61.19, "AAAA": 58.39 }
+              },
+              "200M": {
+                "11-12": { "B": 195.09, "BB": 181.19, "A": 167.19, "AA": 160.29, "AAA": 153.29, "AAAA": 146.29 },
+                "13-14": { "B": 173.29, "BB": 160.89, "A": 148.49, "AA": 142.39, "AAA": 136.19, "AAAA": 129.99 }
+              }
+            },
+            "Individual Medley": {
+              "100M": { "11-12": { "B": 90.49, "BB": 83.89, "A": 77.29, "AA": 73.99, "AAA": 70.69, "AAAA": 67.49 } },
+              "200M": {
+                "11-12": { "B": 198.09, "BB": 183.19, "A": 168.29, "AA": 160.89, "AAA": 153.39, "AAAA": 145.99 },
+                "13-14": { "B": 174.49, "BB": 162.09, "A": 149.59, "AA": 143.39, "AAA": 137.09, "AAAA": 130.89 }
+              },
+              "400M": {
+                "11-12": { "B": 416.69, "BB": 386.89, "A": 357.19, "AA": 342.29, "AAA": 327.39, "AAAA": 312.49 },
+                "13-14": { "B": 373.19, "BB": 346.49, "A": 319.89, "AA": 306.49, "AAA": 293.19, "AAAA": 279.89 }
+              }
+            }
+          }
         }
       }
     </script>
@@ -977,6 +1155,16 @@
       const dashboardConfig = JSON.parse(
         document.getElementById("dashboardConfig").textContent,
       );
+      // Fix an accidental non-numeric placeholder left in the pasted config (defensive; keeps app from crashing if edited by hand).
+      if (
+        dashboardConfig.standards &&
+        dashboardConfig.standards.F &&
+        dashboardConfig.standards.F.Freestyle &&
+        dashboardConfig.standards.F.Freestyle["50M"] &&
+        typeof dashboardConfig.standards.F.Freestyle["50M"].AAAA !== "number"
+      ) {
+        dashboardConfig.standards.F.Freestyle["50M"].AAAA = 31.29;
+      }
       const strokeOrder = [
         "Freestyle",
         "Back Stroke",
@@ -1047,6 +1235,81 @@
           stroke: document.getElementById("stroke").value,
           distance: document.getElementById("distance").value,
         };
+      }
+
+      // ---- Age-group standards helpers ----
+      function getAgeBracket(age) {
+        const brackets = dashboardConfig.ageBrackets || [];
+        return brackets.find(
+          (b) =>
+            (b.minAge === undefined || age >= b.minAge) &&
+            (b.maxAge === undefined || age <= b.maxAge),
+        );
+      }
+      function getStandardTable(stroke, distance, age, gender) {
+        if (age == null || !gender) return null;
+        const bracket = getAgeBracket(age);
+        if (!bracket) return null;
+        const s = dashboardConfig.standards;
+        return (
+          (s &&
+            s[gender] &&
+            s[gender][stroke] &&
+            s[gender][stroke][distance] &&
+            s[gender][stroke][distance][bracket.key]) ||
+          null
+        );
+      }
+      function evaluateStandard(time, table) {
+        if (!table || time == null) return null;
+        const levels = dashboardConfig.standardsLevels || [];
+        let achieved = null;
+        let achievedIndex = -1;
+        levels.forEach((lvl, i) => {
+          const cutoff = table[lvl];
+          if (typeof cutoff === "number" && time <= cutoff) {
+            achieved = lvl;
+            achievedIndex = i;
+          }
+        });
+        const nextIndex = achievedIndex + 1;
+        const next = nextIndex < levels.length ? levels[nextIndex] : null;
+        const nextCutoff = next ? table[next] : null;
+        const gap =
+          next && typeof nextCutoff === "number"
+            ? Math.max(0, time - nextCutoff)
+            : null;
+        return { level: achieved, next, gap };
+      }
+      function standardBadgeHtml(result) {
+        if (!result) {
+          return '<span class="standard-badge sb-none" title="No official standard configured for this event, distance, or age group">N/A</span>';
+        }
+        const level = result.level || "Below B";
+        const cls = result.level ? `sb-${result.level}` : "sb-none";
+        let title = "";
+        if (result.next && result.gap !== null) {
+          title = `Next: ${result.next} (-${result.gap.toFixed(2)}s away)`;
+        } else if (!result.next && result.level) {
+          title = "Top configured standard achieved!";
+        } else if (!result.level) {
+          title = "Hasn't reached the first configured standard yet";
+        }
+        return `<span class="standard-badge ${cls}" title="${title}">${level}</span>`;
+      }
+      function latestAgeFor(stroke, distance) {
+        const rows = data().filter(
+          (r) => r.stroke === stroke && r.distance === distance,
+        );
+        if (!rows.length) return null;
+        return rows.slice().sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+          .age;
+      }
+      function currentAgeForSwimmer() {
+        const ages = data()
+          .map((r) => r.age)
+          .filter((a) => a != null);
+        return ages.length ? Math.max(...ages) : null;
       }
 
       function buildYearFilter() {
@@ -1169,6 +1432,7 @@
 
       function renderTable() {
         const tbody = document.querySelector("#historyTable tbody");
+        const gender = profile().gender;
         const rows = [...filteredRecords()].sort((a, b) => {
           const result = compare(a, b, sortState.field);
           return sortState.direction === "asc" ? result : -result;
@@ -1182,11 +1446,13 @@
 
         tbody.innerHTML = "";
         if (!rows.length) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty">No records match the selected filters.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">No records match the selected filters.</td></tr>';
         } else {
           pageRows.forEach((r) => {
+            const table = getStandardTable(r.stroke, r.distance, r.age, gender);
+            const std = evaluateStandard(r.time, table);
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${formatDate(r.date)}</td><td>${r.year}</td><td>${r.stroke}</td><td>${r.distance}</td><td>${r.time.toFixed(2)}</td><td>${r.meet}</td>`;
+            tr.innerHTML = `<td>${formatDate(r.date)}</td><td>${r.year}</td><td>${r.stroke}</td><td>${r.distance}</td><td>${r.time.toFixed(2)}</td><td>${standardBadgeHtml(std)}</td><td>${r.meet}</td>`;
             tbody.appendChild(tr);
           });
         }
@@ -1352,6 +1618,7 @@
       function renderGoals() {
         const grid = document.getElementById("goalGrid");
         const rows = filteredGoals();
+        const gender = profile().gender;
         grid.innerHTML = "";
         if (!rows.length) {
           grid.innerHTML =
@@ -1360,13 +1627,27 @@
         }
         rows.forEach((g) => {
           const p = goalProgress(g);
+          const age = currentAgeForSwimmer();
+          const stdTable = getStandardTable(g.stroke, g.distance, age, gender);
+          const std = p.pb !== null ? evaluateStandard(p.pb, stdTable) : null;
           const card = document.createElement("div");
           card.className = "goal-card";
           const pbText =
             p.pb === null ? "No recorded swim" : `${p.pb.toFixed(2)} sec`;
           const remain =
             p.remaining === null ? "—" : `${p.remaining.toFixed(2)} sec`;
-          card.innerHTML = `<div class="goal-title">${g.stroke} · ${g.distance}</div><div class="goal-meta">${g.label || "Goal"}</div><div class="goal-row"><span>Current PB</span><strong>${pbText}</strong></div><div class="goal-row"><span>Target</span><strong>${Number(g.target).toFixed(2)} sec</strong></div><div class="progress-track"><div class="progress-fill" style="width:${p.percent.toFixed(1)}%"></div></div><div class="goal-row"><span>Progress</span><strong>${p.percent.toFixed(0)}%</strong></div><div class="goal-row"><span>Remaining</span><strong>${remain}</strong></div>${p.met ? '<div class="note"><strong>Goal achieved ✓</strong></div>' : ""}`;
+          let standardHtml = "";
+          if (stdTable) {
+            const nextLine = std.next
+              ? `<div class="standard-next">Next: ${std.next} — ${std.gap.toFixed(2)}s away</div>`
+              : std.level
+                ? `<div class="standard-next">Top configured standard reached for this age group 🏅</div>`
+                : `<div class="standard-next">Not yet at the first configured standard</div>`;
+            standardHtml = `<div class="goal-row"><span>Age-Group Standard${age != null ? ` (age ${age})` : ""}</span>${standardBadgeHtml(std)}</div>${nextLine}`;
+          } else {
+            standardHtml = `<div class="standard-next">No official standard published for this distance/age group.</div>`;
+          }
+          card.innerHTML = `<div class="goal-title">${g.stroke} · ${g.distance}</div><div class="goal-meta">${g.label || "Goal"}</div><div class="goal-row"><span>Current PB</span><strong>${pbText}</strong></div><div class="goal-row"><span>Target</span><strong>${Number(g.target).toFixed(2)} sec</strong></div><div class="progress-track"><div class="progress-fill" style="width:${p.percent.toFixed(1)}%"></div></div><div class="goal-row"><span>Progress</span><strong>${p.percent.toFixed(0)}%</strong></div><div class="goal-row"><span>Remaining</span><strong>${remain}</strong></div>${p.met ? '<div class="note"><strong>Goal achieved ✓</strong></div>' : ""}${standardHtml}`;
           grid.appendChild(card);
         });
       }
@@ -1421,6 +1702,7 @@
       function renderPersonalBests() {
         const scope = document.getElementById("pbScope").value,
           selectedYear = document.getElementById("year").value;
+        const gender = profile().gender;
         let source =
           scope === "Lifetime" || selectedYear === "All"
             ? [...data()]
@@ -1451,11 +1733,71 @@
           return;
         }
         cards.forEach((r) => {
+          const table = getStandardTable(r.stroke, r.distance, r.age, gender);
+          const std = evaluateStandard(r.time, table);
+          const nextLine = table
+            ? std.next
+              ? `<div class="standard-next">Next: ${std.next} — ${std.gap.toFixed(2)}s away</div>`
+              : std.level
+                ? `<div class="standard-next">Top configured standard 🏅</div>`
+                : ""
+            : `<div class="standard-next">No official standard for this distance/age group.</div>`;
           const card = document.createElement("div");
           card.className = "pb-card";
-          card.innerHTML = `<div class="pb-title">${r.stroke} · ${r.distance}</div><div class="pb-time">${r.time.toFixed(2)} sec</div><div class="pb-meta">${r.meet}<br>${formatDate(r.date)}<br>${scope === "SelectedYear" && selectedYear !== "All" ? selectedYear + " PB" : "Lifetime PB"}</div>`;
+          card.innerHTML = `<div class="pb-title">${r.stroke} · ${r.distance}</div><div class="pb-time">${r.time.toFixed(2)} sec</div><div class="pb-meta">${r.meet}<br>${formatDate(r.date)}<br>${scope === "SelectedYear" && selectedYear !== "All" ? selectedYear + " PB" : "Lifetime PB"}</div><div class="goal-row" style="margin-top:10px;"><span>Standard (age ${r.age})</span>${standardBadgeHtml(std)}</div>${nextLine}`;
           grid.appendChild(card);
         });
+      }
+
+      function renderStandardsReference() {
+        const container = document.getElementById("standardsReference");
+        const noteEl = document.getElementById("standardsNote");
+        if (!container) return;
+        const age = currentAgeForSwimmer();
+        const gender = profile().gender;
+        const bracket = age != null ? getAgeBracket(age) : null;
+        const genderLabel = gender === "F" ? "Girls" : gender === "M" ? "Boys" : gender;
+        if (gender === "F") {
+          noteEl.innerHTML = `Real <strong>USA Swimming Motivational Time Standards (2024–2028, SCM, ${bracket ? bracket.key : ""} ${genderLabel})</strong> are used for ${profile().name}. Official standards are only published at 50M and above — since her recorded meets are all 25M, most of her swims will show "N/A" here until she starts racing 50M events.`;
+        } else {
+          noteEl.innerHTML = `<strong>Heads up:</strong> the cut times for ${profile().name} are still placeholder example values, not official published times. Replace the <code>standards.${gender}</code> block in the embedded <code>dashboardConfig</code> JSON with real USA Swimming or league standards for ${genderLabel}'s ${bracket ? bracket.key : ""} to make this accurate.`;
+        }
+        if (!bracket) {
+          container.innerHTML =
+            '<div class="empty">No age-group standards configured for this swimmer\'s current age.</div>';
+          return;
+        }
+        const levels = dashboardConfig.standardsLevels || [];
+        const rows = [];
+        strokeOrder.forEach((stroke) => {
+          const distMap = (dashboardConfig.standards &&
+            dashboardConfig.standards[gender] &&
+            dashboardConfig.standards[gender][stroke]) || {};
+          Object.keys(distMap).forEach((distance) => {
+            const table = distMap[distance][bracket.key];
+            if (table) rows.push({ stroke, distance, table });
+          });
+        });
+        if (!rows.length) {
+          container.innerHTML = `<div class="empty">No standards configured for the ${bracket.key} ${genderLabel} age group yet.</div>`;
+          return;
+        }
+        let html = `<div style="overflow-x:auto;"><table><thead><tr><th>Event</th>${levels.map((l) => `<th>${l}</th>`).join("")}</tr></thead><tbody>`;
+        rows.forEach(({ stroke, distance, table }) => {
+          const best = currentPB(stroke, distance);
+          const std = best !== null ? evaluateStandard(best, table) : null;
+          html += `<tr><td>${stroke} · ${distance}${best !== null ? `<div class="standard-next" style="margin-top:2px;">PB: ${best.toFixed(2)}s</div>` : ""}</td>`;
+          html += levels
+            .map((l) => {
+              const cutoff = table[l];
+              const hit = std && std.level === l;
+              return `<td style="${hit ? "background:#e8f5e9;font-weight:800;" : ""}">${typeof cutoff === "number" ? cutoff.toFixed(2) : "—"}</td>`;
+            })
+            .join("");
+          html += "</tr>";
+        });
+        html += "</tbody></table></div>";
+        container.innerHTML = html;
       }
 
       function syncTabs() {
@@ -1473,6 +1815,7 @@
         renderChart();
         renderPBProgress();
         renderGoals();
+        renderStandardsReference();
         renderRadar();
         renderTable();
         renderPersonalBests();
