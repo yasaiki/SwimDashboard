@@ -352,19 +352,31 @@
             </select>
           </div>
           <div class="filter-group">
+            <label for="course">Course</label
+            ><select id="course">
+              <option value="All">All</option>
+              <option value="M">Meters</option>
+              <option value="Y">Yards</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <label for="distance">Distance</label
             ><select id="distance"></select>
           </div>
         </div>
         <div class="note">
-          Selecting a year displays every record from that year. Stroke and
-          distance narrow the selected year's records.
+          Selecting a year displays every record from that year. Stroke, course,
+          and distance narrow the selected year's records.
         </div>
       </div>
 
       <details class="card collapsible" open>
         <summary><h2>Progress by Stroke</h2></summary>
         <div class="section-body">
+          <div class="distance-tabs" id="progressCourseTabs" aria-label="Progress course tabs">
+            <button class="distance-tab active" type="button" data-progress-course="M">Meters</button>
+            <button class="distance-tab" type="button" data-progress-course="Y">Yards</button>
+          </div>
           <div
             class="distance-tabs"
             id="distanceTabs"
@@ -373,8 +385,8 @@
           <div id="progressLegend" class="chart-legend" aria-label="Progress chart legend"></div>
           <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
           <div class="note">
-            Each stroke + distance combination is plotted separately. Lower
-            times are faster.
+            Use the Meters and Yards tabs to compare each course separately.
+            Lower times are faster, so improvement trends downward.
           </div>
         </div>
       </details>
@@ -391,17 +403,7 @@
         </div>
       </details>
 
-      <details class="card collapsible" open>
-        <summary><h2>Goal Progress Bars</h2></summary>
-        <div class="section-body">
-          <div id="goalGrid" class="goal-grid"></div>
-          <div class="note">
-            Goals come from the embedded JSON configuration near the bottom of
-            this HTML file. Edit the target value or add another goal object to
-            update this section.
-          </div>
-        </div>
-      </details>
+
 
       <details class="card collapsible" open>
         <summary><h2>Age-Group Standards</h2></summary>
@@ -422,7 +424,39 @@
         </div>
       </details>
 
+    
+
       <details class="card collapsible" open>
+        <summary><h2>Personal Bests</h2></summary>
+        <div class="section-body">
+          <div class="pb-controls">
+            <div class="filter-group">
+              <label for="pbScope">Personal Best Scope</label
+              ><select id="pbScope">
+                <option value="Lifetime">Lifetime Personal Best</option>
+                <option value="SelectedYear">Best in Selected Year</option>
+              </select>
+            </div>
+          </div>
+          <div id="pbGrid" class="pb-grid"></div>
+          <div class="note">
+            Lifetime mode uses every result. Selected-year mode uses the current
+            Year filter.
+          </div>
+        </div>
+      </details>
+            <details class="card collapsible" open>
+        <summary><h2>Goal Progress Bars</h2></summary>
+        <div class="section-body">
+          <div id="goalGrid" class="goal-grid"></div>
+          <div class="note">
+            Goals come from the embedded JSON configuration near the bottom of
+            this HTML file. Edit the target value or add another goal object to
+            update this section.
+          </div>
+        </div>
+      </details>
+  <details class="card collapsible" open>
         <summary><h2>Historical Data</h2></summary>
         <div class="section-body">
           <div style="overflow-x: auto">
@@ -442,7 +476,7 @@
                     Distance <span class="sort-arrow"></span>
                   </th>
                   <th data-field="time">
-                    Time (sec) <span class="sort-arrow"></span>
+                    Time <span class="sort-arrow"></span>
                   </th>
                   <th>Standard</th>
                   <th data-field="meet">
@@ -477,40 +511,13 @@
           </div>
         </div>
       </details>
-
-      <details class="card collapsible" open>
-        <summary><h2>Personal Bests</h2></summary>
-        <div class="section-body">
-          <div class="pb-controls">
-            <div class="filter-group">
-              <label for="pbScope">Personal Best Scope</label
-              ><select id="pbScope">
-                <option value="Lifetime">Lifetime Personal Best</option>
-                <option value="SelectedYear">Best in Selected Year</option>
-              </select>
-            </div>
-          </div>
-          <div id="pbGrid" class="pb-grid"></div>
-          <div class="note">
-            Lifetime mode uses every result. Selected-year mode uses the current
-            Year filter.
-          </div>
-        </div>
-      </details>
-
       <details class="card collapsible">
         <summary><h2>Goal &amp; Standards JSON Reference</h2></summary>
         <div class="section-body">
           <div class="json-hint">
             Edit the &lt;script type="application/json" id="dashboardConfig"&gt;
             block in this file. Goals use: swimmer key → stroke → distance →
-            target seconds → label. Age-group standards use: gender ("F"/"M")
-            → stroke → distance → age-bracket key → level → cutoff seconds,
-            plus top-level <code>ageBrackets</code> (min/max age per bracket
-            key) and <code>standardsLevels</code> (ordered easiest to
-            hardest). Each swimmer's <code>gender</code> field (in the
-            swimmerData object above) determines which half of the standards
-            table they're compared against.
+            target seconds → label. USA Swimming standards are stored under <code>usaStandards.courses</code> → course (SCY/SCM/LCM) → gender (F/M) → age bracket → stroke → distance → level → cutoff seconds. The dashboard currently applies SCY to yard results and SCM to meter results. Each swimmer's <code>currentAge</code> and <code>gender</code> determine the reference age group.
           </div>
         </div>
       </details>
@@ -522,6 +529,7 @@
         sofia: {
           name: "Sofia Li",
           gender: "F",
+          currentAge: 7,
           sourceUrl:
             "https://reachforthewall.org/swimmer-stats/?sid=Li,Sofia381062500",
           sourcePdf: "Swimmer Stats – Sofia.pdf",
@@ -621,6 +629,7 @@
         noah: {
           name: "Noah Lau",
           gender: "M",
+          currentAge: 12,
           sourceUrl:
             "https://reachforthewall.org/swimmer-stats/?sid=Lau,NoahM349335000",
           sourcePdf: "Swimmer Stats – Noah.pdf",
@@ -951,10 +960,163 @@
               meet: "BKS",
               age: 11,
             },
+            {
+              date: "2026-09-27",
+              year: 2026,
+              stroke: "Breast Stroke",
+              distance: "100Y",
+              time: 87.39,
+              meet: "MAKO FALL INVITATIONAL 2026",
+              age: 12,
+            },
+            {
+              date: "2026-09-27",
+              year: 2026,
+              stroke: "Butterfly",
+              distance: "50Y",
+              time: 32.09,
+              meet: "MAKO FALL INVITATIONAL 2026",
+              age: 12,
+            },
+            {
+              date: "2026-09-27",
+              year: 2026,
+              stroke: "Back Stroke",
+              distance: "50Y",
+              time: 34.85,
+              meet: "MAKO FALL INVITATIONAL 2026",
+              age: 12,
+            },
+            {
+              date: "2026-02-21",
+              year: 2026,
+              stroke: "Butterfly",
+              distance: "50Y",
+              time: 35.70,
+              meet: "2026 FXFX Forty Niner",
+              age: 11,
+            },
+            {
+              date: "2026-02-21",
+              year: 2026,
+              stroke: "Breast Stroke",
+              distance: "50Y",
+              time: 43.72,
+              meet: "2026 FXFX Forty Niner",
+              age: 11,
+            },
+            {
+              date: "2026-02-21",
+              year: 2026,
+              stroke: "Individual Medley",
+              distance: "100Y",
+              time: 80.60,
+              meet: "2026 FXFX Forty Niner",
+              age: 11,
+            },
+            {
+              date: "2026-01-17",
+              year: 2026,
+              stroke: "Breast Stroke",
+              distance: "50Y",
+              time: 45.42,
+              meet: "PVS January Open 2026 - PWCS",
+              age: 11,
+            },
+            {
+              date: "2026-01-17",
+              year: 2026,
+              stroke: "Freestyle",
+              distance: "100Y",
+              time: 83.21,
+              meet: "PVS January Open 2026 - PWCS",
+              age: 11,
+            },
+            {
+              date: "2026-01-17",
+              year: 2026,
+              stroke: "Back Stroke",
+              distance: "50Y",
+              time: 40.16,
+              meet: "PVS January Open 2026 - PWCS",
+              age: 11,
+            },
+            {
+              date: "2026-01-17",
+              year: 2026,
+              stroke: "Butterfly",
+              distance: "100Y",
+              time: 89.98,
+              meet: "PVS January Open 2026 - PWCS",
+              age: 11,
+            },
+            {
+              date: "2025-11-09",
+              year: 2025,
+              stroke: "Freestyle",
+              distance: "50Y",
+              time: 32.73,
+              meet: "2025 FXFX Loughmiller Memorial",
+              age: 11,
+            },
+            {
+              date: "2025-11-09",
+              year: 2025,
+              stroke: "Breast Stroke",
+              distance: "100Y",
+              time: 96.34,
+              meet: "2025 FXFX Loughmiller Memorial",
+              age: 11,
+            },
+            {
+              date: "2025-11-09",
+              year: 2025,
+              stroke: "Butterfly",
+              distance: "50Y",
+              time: 35.46,
+              meet: "2025 FXFX Loughmiller Memorial",
+              age: 11,
+            },
+            {
+              date: "2025-10-18",
+              year: 2025,
+              stroke: "Freestyle",
+              distance: "50Y",
+              time: 32.94,
+              meet: "2025 NCAP Autumn Kingfish Spla",
+              age: 11,
+            },
+            {
+              date: "2025-10-18",
+              year: 2025,
+              stroke: "Butterfly",
+              distance: "50Y",
+              time: 37.00,
+              meet: "2025 NCAP Autumn Kingfish Spla",
+              age: 11,
+            },
+            {
+              date: "2025-09-28",
+              year: 2025,
+              stroke: "Butterfly",
+              distance: "50Y",
+              time: 38.18,
+              meet: "MAKO FALL INVITATIONAL 2025",
+              age: 11,
+            },
+            {
+              date: "2025-09-28",
+              year: 2025,
+              stroke: "Freestyle",
+              distance: "100Y",
+              time: 75.14,
+              meet: "MAKO FALL INVITATIONAL 2025",
+              age: 11,
+            },
           ],
         },
       };
-      const dataLastSynced = "2026-08-11 13:49:57";
+      const dataLastSynced = "2026-09-29 15:36:00";
       // RFTW_DATA_END
     </script>
 
@@ -962,209 +1124,897 @@
     <script type="application/json" id="dashboardConfig">
       {
         "goals": {
-          "sofia": [
-            {
-              "stroke": "Freestyle",
-              "distance": "25M",
-              "target": 26.5,
-              "label": "Next Goal"
-            },
-            {
-              "stroke": "Back Stroke",
-              "distance": "25M",
-              "target": 29.5,
-              "label": "Next Goal"
-            },
-            {
-              "stroke": "Breast Stroke",
-              "distance": "25M",
-              "target": 34.0,
-              "label": "Development Goal"
-            },
-            {
-              "stroke": "Butterfly",
-              "distance": "25M",
-              "target": 32.0,
-              "label": "Development Goal"
-            }
-          ],
-          "noah": [
-            {
-              "stroke": "Freestyle",
-              "distance": "50M",
-              "target": 35.0,
-              "label": "Next Goal"
-            },
-            {
-              "stroke": "Back Stroke",
-              "distance": "50M",
-              "target": 40.0,
-              "label": "Next Goal"
-            },
-            {
-              "stroke": "Breast Stroke",
-              "distance": "50M",
-              "target": 40.0,
-              "label": "Development Goal"
-            },
-            {
-              "stroke": "Butterfly",
-              "distance": "25M",
-              "target": 16.0,
-              "label": "Development Goal"
-            },
-            {
-              "stroke": "Butterfly",
-              "distance": "50M",
-              "target": 33.5,
-              "label": "Next Goal"
-            },
-             {
-              "stroke": "Individual Medley",
-              "distance": "100M",
-              "target": 80.0,
-              "label": "Next Goal"
-            }
-          ]
+                "sofia": [
+                        {
+                                "stroke": "Freestyle",
+                                "distance": "25M",
+                                "target": 26.5,
+                                "label": "Next Goal"
+                        },
+                        {
+                                "stroke": "Back Stroke",
+                                "distance": "25M",
+                                "target": 29.5,
+                                "label": "Next Goal"
+                        },
+                        {
+                                "stroke": "Breast Stroke",
+                                "distance": "25M",
+                                "target": 34.0,
+                                "label": "Development Goal"
+                        },
+                        {
+                                "stroke": "Butterfly",
+                                "distance": "25M",
+                                "target": 32.0,
+                                "label": "Development Goal"
+                        }
+                ],
+                "noah": [
+                        {
+                                "stroke": "Freestyle",
+                                "distance": "50M",
+                                "target": 35.0,
+                                "label": "Next Goal"
+                        },
+                        {
+                                "stroke": "Back Stroke",
+                                "distance": "50M",
+                                "target": 40.0,
+                                "label": "Next Goal"
+                        },
+                        {
+                                "stroke": "Breast Stroke",
+                                "distance": "50M",
+                                "target": 40.0,
+                                "label": "Development Goal"
+                        },
+                        {
+                                "stroke": "Butterfly",
+                                "distance": "25M",
+                                "target": 16.0,
+                                "label": "Development Goal"
+                        },
+                        {
+                                "stroke": "Butterfly",
+                                "distance": "50M",
+                                "target": 33.5,
+                                "label": "Next Goal"
+                        },
+                        {
+                                "stroke": "Individual Medley",
+                                "distance": "100M",
+                                "target": 80.0,
+                                "label": "Next Goal"
+                        }
+                ]
         },
-        "standardsLevels": ["B", "BB", "A", "AA", "AAA", "AAAA"],
-        "ageBrackets": [
-          { "key": "10U", "maxAge": 10 },
-          { "key": "11-12", "minAge": 11, "maxAge": 12 },
-          { "key": "13-14", "minAge": 13, "maxAge": 14 }
+        "standardsLevels": [
+                "B",
+                "BB",
+                "A",
+                "AA",
+                "AAA",
+                "AAAA"
         ],
-        "standardsSource": "USA Swimming Motivational Time Standards, 2024-2028, SCM course",
-        "standards": {
-          "F": {
-            "Freestyle": {
-              "50M": { "B": 43.99, "BB": 39.79, "A": 35.49, "AA": 34.09, "AAA": 32.69, "AAAA": "10U" },
-              "100M": { "B": 100.29, "BB": 89.69, "A": 78.99, "AA": 75.39, "AAA": 71.89, "AAAA": 68.29 },
-              "200M": { "B": 223.99, "BB": 199.49, "A": 174.99, "AA": 166.79, "AAA": 158.59, "AAAA": 150.39 },
-              "400M": { "B": 452.19, "BB": 406.89, "A": 361.69, "AA": 346.69, "AAA": 331.59, "AAAA": 316.49 }
-            },
-            "Back Stroke": {
-              "50M": { "B": 53.69, "BB": 47.79, "A": 41.89, "AA": 39.99, "AAA": 37.99, "AAAA": 36.09 },
-              "100M": { "B": 116.89, "BB": 103.89, "A": 90.89, "AA": 86.59, "AAA": 82.29, "AAAA": 77.99 }
-            },
-            "Breast Stroke": {
-              "50M": { "B": 60.29, "BB": 53.79, "A": 47.29, "AA": 45.09, "AAA": 42.99, "AAAA": 40.79 },
-              "100M": { "B": 132.89, "BB": 118.19, "A": 103.39, "AA": 98.49, "AAA": 93.59, "AAAA": 88.69 }
-            },
-            "Butterfly": {
-              "50M": { "B": 53.49, "BB": 47.19, "A": 40.89, "AA": 38.79, "AAA": 36.69, "AAAA": 34.59 },
-              "100M": { "B": 128.89, "BB": 112.09, "A": 95.19, "AA": 89.49, "AAA": 83.89, "AAAA": 78.29 }
-            },
-            "Individual Medley": {
-              "100M": { "B": 115.19, "BB": 102.99, "A": 90.69, "AA": 86.59, "AAA": 82.49, "AAAA": 78.39 },
-              "200M": { "B": 245.39, "BB": 219.59, "A": 193.89, "AA": 185.29, "AAA": 176.79, "AAAA": 168.19 }
-            }
-          },
-          "M": {
-            "Freestyle": {
-              "25M": { "10U": { "B": 50, "BB": 42, "A": 36, "AA": 32, "AAA": 29, "AAAA": 26 } },
-              "50M": {
-                "10U": { "B": 70, "BB": 60, "A": 52, "AA": 46, "AAA": 40, "AAAA": 35 },
-                "11-12": { "B": 36.29, "BB": 33.69, "A": 31.09, "AA": 29.79, "AAA": 28.49, "AAAA": 27.19 },
-                "13-14": { "B": 32.99, "BB": 30.69, "A": 28.29, "AA": 27.09, "AAA": 25.89, "AAAA": 24.79 }
-              },
-              "100M": {
-                "11-12": { "B": 78.99, "BB": 73.29, "A": 67.69, "AA": 64.89, "AAA": 62.09, "AAAA": 59.19 },
-                "13-14": { "B": 71.79, "BB": 66.69, "A": 61.49, "AA": 58.99, "AAA": 56.39, "AAAA": 53.89 }
-              },
-              "200M": {
-                "11-12": { "B": 172.39, "BB": 160.09, "A": 147.79, "AA": 141.59, "AAA": 135.49, "AAAA": 129.29 },
-                "13-14": { "B": 157.49, "BB": 146.19, "A": 134.99, "AA": 129.39, "AAA": 123.69, "AAAA": 118.09 }
-              },
-              "400M": {
-                "11-12": { "B": 367.49, "BB": 341.19, "A": 314.99, "AA": 301.79, "AAA": 288.69, "AAAA": 275.59 },
-                "13-14": { "B": 337.49, "BB": 313.39, "A": 289.29, "AA": 277.29, "AAA": 265.19, "AAAA": 253.19 }
-              },
-              "800M": {
-                "11-12": { "B": 773.09, "BB": 717.89, "A": 662.59, "AA": 634.99, "AAA": 607.39, "AAAA": 579.79 },
-                "13-14": { "B": 698.19, "BB": 648.39, "A": 598.59, "AA": 573.59, "AAA": 548.59, "AAAA": 523.69 }
-              },
-              "1500M": {
-                "11-12": { "B": 1458.89, "BB": 1354.69, "A": 1250.49, "AA": 1198.39, "AAA": 1146.29, "AAAA": 1094.19 },
-                "13-14": { "B": 1334.89, "BB": 1239.49, "A": 1144.19, "AA": 1096.49, "AAA": 1048.79, "AAAA": 1001.19 }
-              }
-            },
-            "Back Stroke": {
-              "25M": { "10U": { "B": 55, "BB": 46, "A": 39, "AA": 34, "AAA": 30, "AAAA": 27 } },
-              "50M": {
-                "10U": { "B": 85, "BB": 75, "A": 67, "AA": 60, "AAA": 53, "AAAA": 47 },
-                "11-12": { "B": 42.59, "BB": 39.29, "A": 36.09, "AA": 34.49, "AAA": 32.79, "AAAA": 31.19 },
-                "13-14": { "B": 37.19, "BB": 34.59, "A": 31.89, "AA": 30.59, "AAA": 29.19, "AAAA": 27.89 }
-              },
-              "100M": {
-                "11-12": { "B": 90.79, "BB": 83.69, "A": 76.49, "AA": 72.89, "AAA": 69.39, "AAAA": 65.79 },
-                "13-14": { "B": 78.79, "BB": 73.09, "A": 67.49, "AA": 64.69, "AAA": 61.89, "AAAA": 59.09 }
-              },
-              "200M": {
-                "11-12": { "B": 190.99, "BB": 177.39, "A": 163.69, "AA": 156.89, "AAA": 150.09, "AAAA": 143.29 },
-                "13-14": { "B": 170.99, "BB": 158.69, "A": 146.49, "AA": 140.39, "AAA": 134.29, "AAAA": 128.19 }
-              }
-            },
-            "Breast Stroke": {
-              "25M": { "10U": { "B": 50, "BB": 42, "A": 37, "AA": 33, "AAA": 29, "AAAA": 25 } },
-              "50M": {
-                "10U": { "B": 80, "BB": 68, "A": 60, "AA": 53, "AAA": 47, "AAAA": 42 },
-                "11-12": { "B": 48.09, "BB": 44.29, "A": 40.49, "AA": 38.59, "AAA": 36.69, "AAAA": 34.89 },
-                "13-14": { "B": 42.59, "BB": 39.59, "A": 36.49, "AA": 34.99, "AAA": 33.49, "AAAA": 31.99 }
-              },
-              "100M": {
-                "11-12": { "B": 102.29, "BB": 94.49, "A": 86.69, "AA": 82.79, "AAA": 78.89, "AAAA": 74.99 },
-                "13-14": { "B": 88.99, "BB": 82.59, "A": 76.29, "AA": 73.09, "AAA": 69.89, "AAAA": 66.79 }
-              },
-              "200M": {
-                "11-12": { "B": 217.09, "BB": 201.59, "A": 186.09, "AA": 178.29, "AAA": 170.59, "AAAA": 162.79 },
-                "13-14": { "B": 193.19, "BB": 179.39, "A": 165.59, "AA": 158.69, "AAA": 151.79, "AAAA": 144.89 }
-              }
-            },
-            "Butterfly": {
-              "25M": { "10U": { "B": 32, "BB": 27, "A": 23, "AA": 20, "AAA": 18, "AAAA": 16 } },
-              "50M": {
-                "11-12": { "B": 40.99, "BB": 37.69, "A": 34.49, "AA": 32.79, "AAA": 31.19, "AAAA": 29.59 },
-                "13-14": { "B": 36.59, "BB": 33.99, "A": 31.39, "AA": 30.09, "AAA": 28.79, "AAAA": 27.49 }
-              },
-              "100M": {
-                "11-12": { "B": 91.59, "BB": 84.09, "A": 76.49, "AA": 72.79, "AAA": 68.99, "AAAA": 65.29 },
-                "13-14": { "B": 77.89, "BB": 72.29, "A": 66.79, "AA": 63.99, "AAA": 61.19, "AAAA": 58.39 }
-              },
-              "200M": {
-                "11-12": { "B": 195.09, "BB": 181.19, "A": 167.19, "AA": 160.29, "AAA": 153.29, "AAAA": 146.29 },
-                "13-14": { "B": 173.29, "BB": 160.89, "A": 148.49, "AA": 142.39, "AAA": 136.19, "AAAA": 129.99 }
-              }
-            },
-            "Individual Medley": {
-              "100M": { "11-12": { "B": 90.49, "BB": 83.89, "A": 77.29, "AA": 73.99, "AAA": 70.69, "AAAA": 67.49 } },
-              "200M": {
-                "11-12": { "B": 198.09, "BB": 183.19, "A": 168.29, "AA": 160.89, "AAA": 153.39, "AAAA": 145.99 },
-                "13-14": { "B": 174.49, "BB": 162.09, "A": 149.59, "AA": 143.39, "AAA": 137.09, "AAAA": 130.89 }
-              },
-              "400M": {
-                "11-12": { "B": 416.69, "BB": 386.89, "A": 357.19, "AA": 342.29, "AAA": 327.39, "AAAA": 312.49 },
-                "13-14": { "B": 373.19, "BB": 346.49, "A": 319.89, "AA": 306.49, "AAA": 293.19, "AAAA": 279.89 }
-              }
-            }
-          }
+        "ageBrackets": [
+                {
+                        "key": "10U",
+                        "maxAge": 10
+                },
+                {
+                        "key": "11-12",
+                        "minAge": 11,
+                        "maxAge": 12
+                },
+                {
+                        "key": "13-14",
+                        "minAge": 13,
+                        "maxAge": 14
+                }
+        ],
+        "standardsSource": "USA Swimming 2024-2028 Motivational Standards",
+        "usaStandards": {
+                "source": "USA Swimming 2024-2028 Motivational Standards",
+                "sourceDocument": "2028-motivational-standards-age-group.pdf",
+                "documentTimestamp": "10/10/2025 1:02:42 AM",
+                "note": "Dashboard uses SCY for yard records and SCM for meter records. LCM standards are embedded for future records that explicitly identify long-course meters.",
+                "courses": {
+                        "SCY": {
+                                "F": {
+                                        "10U": {
+                                                "Freestyle": {
+                                                        "50Y": {
+                                                                "B": 39.79,
+                                                                "BB": 35.99,
+                                                                "A": 32.09,
+                                                                "AA": 30.89,
+                                                                "AAA": 29.59,
+                                                                "AAAA": 28.29
+                                                        },
+                                                        "100Y": {
+                                                                "B": 90.79,
+                                                                "BB": 81.09,
+                                                                "A": 71.49,
+                                                                "AA": 68.29,
+                                                                "AAA": 64.99,
+                                                                "AAAA": 61.79
+                                                        },
+                                                        "200Y": {
+                                                                "B": 202.79,
+                                                                "BB": 180.59,
+                                                                "A": 158.39,
+                                                                "AA": 150.99,
+                                                                "AAA": 143.59,
+                                                                "AAAA": 136.19
+                                                        },
+                                                        "500Y": {
+                                                                "B": 516.69,
+                                                                "BB": 465.09,
+                                                                "A": 413.39,
+                                                                "AA": 396.19,
+                                                                "AAA": 378.99,
+                                                                "AAAA": 361.69
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50Y": {
+                                                                "B": 48.59,
+                                                                "BB": 43.29,
+                                                                "A": 37.99,
+                                                                "AA": 36.19,
+                                                                "AAA": 34.39,
+                                                                "AAAA": 32.59
+                                                        },
+                                                        "100Y": {
+                                                                "B": 105.79,
+                                                                "BB": 93.99,
+                                                                "A": 82.29,
+                                                                "AA": 78.39,
+                                                                "AAA": 74.49,
+                                                                "AAAA": 70.59
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50Y": {
+                                                                "B": 54.59,
+                                                                "BB": 48.69,
+                                                                "A": 42.79,
+                                                                "AA": 40.89,
+                                                                "AAA": 38.89,
+                                                                "AAAA": 36.89
+                                                        },
+                                                        "100Y": {
+                                                                "B": 120.29,
+                                                                "BB": 106.89,
+                                                                "A": 93.59,
+                                                                "AA": 89.09,
+                                                                "AAA": 84.69,
+                                                                "AAAA": 80.19
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50Y": {
+                                                                "B": 48.39,
+                                                                "BB": 42.69,
+                                                                "A": 36.99,
+                                                                "AA": 35.09,
+                                                                "AAA": 33.19,
+                                                                "AAAA": 31.29
+                                                        },
+                                                        "100Y": {
+                                                                "B": 116.69,
+                                                                "BB": 101.39,
+                                                                "A": 86.09,
+                                                                "AA": 80.99,
+                                                                "AAA": 75.99,
+                                                                "AAAA": 70.89
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "100Y": {
+                                                                "B": 104.29,
+                                                                "BB": 93.19,
+                                                                "A": 82.09,
+                                                                "AA": 78.39,
+                                                                "AAA": 74.69,
+                                                                "AAAA": 70.99
+                                                        },
+                                                        "200Y": {
+                                                                "B": 222.09,
+                                                                "BB": 198.79,
+                                                                "A": 175.49,
+                                                                "AA": 167.69,
+                                                                "AAA": 159.99,
+                                                                "AAAA": 152.19
+                                                        }
+                                                }
+                                        }
+                                },
+                                "M": {
+                                        "11-12": {
+                                                "Freestyle": {
+                                                        "50Y": {
+                                                                "AAAA": 24.59,
+                                                                "AAA": 25.79,
+                                                                "AA": 26.99,
+                                                                "A": 28.09,
+                                                                "BB": 30.49,
+                                                                "B": 32.79
+                                                        },
+                                                        "100Y": {
+                                                                "AAAA": 53.59,
+                                                                "AAA": 56.19,
+                                                                "AA": 58.69,
+                                                                "A": 61.29,
+                                                                "BB": 66.39,
+                                                                "B": 71.49
+                                                        },
+                                                        "200Y": {
+                                                                "AAAA": 116.99,
+                                                                "AAA": 122.59,
+                                                                "AA": 128.19,
+                                                                "A": 133.69,
+                                                                "BB": 144.89,
+                                                                "B": 155.99
+                                                        },
+                                                        "500Y": {
+                                                                "AAAA": 314.99,
+                                                                "AAA": 329.99,
+                                                                "AA": 344.99,
+                                                                "A": 359.99,
+                                                                "BB": 389.99,
+                                                                "B": 419.89
+                                                        },
+                                                        "1000Y": {
+                                                                "AAAA": 662.59,
+                                                                "AAA": 694.19,
+                                                                "AA": 725.79,
+                                                                "A": 757.29,
+                                                                "BB": 820.39,
+                                                                "B": 883.49
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50Y": {
+                                                                "AAAA": 28.19,
+                                                                "AAA": 29.69,
+                                                                "AA": 31.19,
+                                                                "A": 32.69,
+                                                                "BB": 35.59,
+                                                                "B": 38.49
+                                                        },
+                                                        "100Y": {
+                                                                "AAAA": 59.49,
+                                                                "AAA": 62.79,
+                                                                "AA": 65.99,
+                                                                "A": 69.29,
+                                                                "BB": 75.69,
+                                                                "B": 82.19
+                                                        },
+                                                        "200Y": {
+                                                                "AAAA": 129.69,
+                                                                "AAA": 135.89,
+                                                                "AA": 141.99,
+                                                                "A": 148.19,
+                                                                "BB": 160.49,
+                                                                "B": 172.89
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50Y": {
+                                                                "AAAA": 31.49,
+                                                                "AAA": 33.29,
+                                                                "AA": 34.99,
+                                                                "A": 36.69,
+                                                                "BB": 40.09,
+                                                                "B": 43.49
+                                                        },
+                                                        "100Y": {
+                                                                "AAAA": 67.79,
+                                                                "AAA": 71.39,
+                                                                "AA": 74.89,
+                                                                "A": 78.39,
+                                                                "BB": 85.49,
+                                                                "B": 92.59
+                                                        },
+                                                        "200Y": {
+                                                                "AAAA": 147.29,
+                                                                "AAA": 154.39,
+                                                                "AA": 161.39,
+                                                                "A": 168.39,
+                                                                "BB": 182.39,
+                                                                "B": 196.39
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50Y": {
+                                                                "AAAA": 26.69,
+                                                                "AAA": 28.19,
+                                                                "AA": 29.69,
+                                                                "A": 31.19,
+                                                                "BB": 34.19,
+                                                                "B": 37.09
+                                                        },
+                                                        "100Y": {
+                                                                "AAAA": 59.09,
+                                                                "AAA": 62.49,
+                                                                "AA": 65.89,
+                                                                "A": 69.29,
+                                                                "BB": 76.09,
+                                                                "B": 82.89
+                                                        },
+                                                        "200Y": {
+                                                                "AAAA": 132.39,
+                                                                "AAA": 138.69,
+                                                                "AA": 144.99,
+                                                                "A": 151.39,
+                                                                "BB": 163.99,
+                                                                "B": 176.59
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "100Y": {
+                                                                "AAAA": 61.09,
+                                                                "AAA": 63.99,
+                                                                "AA": 66.99,
+                                                                "A": 69.99,
+                                                                "BB": 75.89,
+                                                                "B": 81.89
+                                                        },
+                                                        "200Y": {
+                                                                "AAAA": 132.09,
+                                                                "AAA": 138.79,
+                                                                "AA": 145.59,
+                                                                "A": 152.29,
+                                                                "BB": 165.79,
+                                                                "B": 179.29
+                                                        },
+                                                        "400Y": {
+                                                                "AAAA": 282.79,
+                                                                "AAA": 296.29,
+                                                                "AA": 309.79,
+                                                                "A": 323.19,
+                                                                "BB": 350.09,
+                                                                "B": 377.09
+                                                        }
+                                                }
+                                        }
+                                }
+                        },
+                        "SCM": {
+                                "F": {
+                                        "10U": {
+                                                "Freestyle": {
+                                                        "50M": {
+                                                                "B": 43.99,
+                                                                "BB": 39.79,
+                                                                "A": 35.49,
+                                                                "AA": 34.09,
+                                                                "AAA": 32.69,
+                                                                "AAAA": 31.29
+                                                        },
+                                                        "100M": {
+                                                                "B": 100.29,
+                                                                "BB": 89.69,
+                                                                "A": 78.99,
+                                                                "AA": 75.39,
+                                                                "AAA": 71.89,
+                                                                "AAAA": 68.29
+                                                        },
+                                                        "200M": {
+                                                                "B": 223.99,
+                                                                "BB": 199.49,
+                                                                "A": 174.99,
+                                                                "AA": 166.79,
+                                                                "AAA": 158.59,
+                                                                "AAAA": 150.39
+                                                        },
+                                                        "400M": {
+                                                                "B": 452.19,
+                                                                "BB": 406.89,
+                                                                "A": 361.69,
+                                                                "AA": 346.69,
+                                                                "AAA": 331.59,
+                                                                "AAAA": 316.49
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50M": {
+                                                                "B": 53.69,
+                                                                "BB": 47.79,
+                                                                "A": 41.89,
+                                                                "AA": 39.99,
+                                                                "AAA": 37.99,
+                                                                "AAAA": 36.09
+                                                        },
+                                                        "100M": {
+                                                                "B": 116.89,
+                                                                "BB": 103.89,
+                                                                "A": 90.89,
+                                                                "AA": 86.59,
+                                                                "AAA": 82.29,
+                                                                "AAAA": 77.99
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50M": {
+                                                                "B": 60.29,
+                                                                "BB": 53.79,
+                                                                "A": 47.29,
+                                                                "AA": 45.09,
+                                                                "AAA": 42.99,
+                                                                "AAAA": 40.79
+                                                        },
+                                                        "100M": {
+                                                                "B": 132.89,
+                                                                "BB": 118.19,
+                                                                "A": 103.39,
+                                                                "AA": 98.49,
+                                                                "AAA": 93.59,
+                                                                "AAAA": 88.69
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50M": {
+                                                                "B": 53.49,
+                                                                "BB": 47.19,
+                                                                "A": 40.89,
+                                                                "AA": 38.79,
+                                                                "AAA": 36.69,
+                                                                "AAAA": 34.59
+                                                        },
+                                                        "100M": {
+                                                                "B": 128.89,
+                                                                "BB": 112.09,
+                                                                "A": 95.19,
+                                                                "AA": 89.49,
+                                                                "AAA": 83.89,
+                                                                "AAAA": 78.29
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "100M": {
+                                                                "B": 115.19,
+                                                                "BB": 102.99,
+                                                                "A": 90.69,
+                                                                "AA": 86.59,
+                                                                "AAA": 82.49,
+                                                                "AAAA": 78.39
+                                                        },
+                                                        "200M": {
+                                                                "B": 245.39,
+                                                                "BB": 219.59,
+                                                                "A": 193.89,
+                                                                "AA": 185.29,
+                                                                "AAA": 176.79,
+                                                                "AAAA": 168.19
+                                                        }
+                                                }
+                                        }
+                                },
+                                "M": {
+                                        "11-12": {
+                                                "Freestyle": {
+                                                        "50M": {
+                                                                "AAAA": 27.19,
+                                                                "AAA": 28.49,
+                                                                "AA": 29.79,
+                                                                "A": 31.09,
+                                                                "BB": 33.69,
+                                                                "B": 36.29
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 59.19,
+                                                                "AAA": 62.09,
+                                                                "AA": 64.89,
+                                                                "A": 67.69,
+                                                                "BB": 73.29,
+                                                                "B": 78.99
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 129.29,
+                                                                "AAA": 135.49,
+                                                                "AA": 141.59,
+                                                                "A": 147.79,
+                                                                "BB": 160.09,
+                                                                "B": 172.39
+                                                        },
+                                                        "400M": {
+                                                                "AAAA": 275.59,
+                                                                "AAA": 288.69,
+                                                                "AA": 301.79,
+                                                                "A": 314.99,
+                                                                "BB": 341.19,
+                                                                "B": 367.49
+                                                        },
+                                                        "800M": {
+                                                                "AAAA": 579.79,
+                                                                "AAA": 607.39,
+                                                                "AA": 634.99,
+                                                                "A": 662.59,
+                                                                "BB": 717.89,
+                                                                "B": 773.09
+                                                        },
+                                                        "1500M": {
+                                                                "AAAA": 1094.19,
+                                                                "AAA": 1146.29,
+                                                                "AA": 1198.39,
+                                                                "A": 1250.49,
+                                                                "BB": 1354.69,
+                                                                "B": 1458.89
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50M": {
+                                                                "AAAA": 31.19,
+                                                                "AAA": 32.79,
+                                                                "AA": 34.49,
+                                                                "A": 36.09,
+                                                                "BB": 39.29,
+                                                                "B": 42.59
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 65.79,
+                                                                "AAA": 69.39,
+                                                                "AA": 72.89,
+                                                                "A": 76.49,
+                                                                "BB": 83.69,
+                                                                "B": 90.79
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 143.29,
+                                                                "AAA": 150.09,
+                                                                "AA": 156.89,
+                                                                "A": 163.69,
+                                                                "BB": 177.39,
+                                                                "B": 190.99
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50M": {
+                                                                "AAAA": 34.89,
+                                                                "AAA": 36.69,
+                                                                "AA": 38.59,
+                                                                "A": 40.49,
+                                                                "BB": 44.29,
+                                                                "B": 48.09
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 74.99,
+                                                                "AAA": 78.89,
+                                                                "AA": 82.79,
+                                                                "A": 86.69,
+                                                                "BB": 94.49,
+                                                                "B": 102.29
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 162.79,
+                                                                "AAA": 170.59,
+                                                                "AA": 178.29,
+                                                                "A": 186.09,
+                                                                "BB": 201.59,
+                                                                "B": 217.09
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50M": {
+                                                                "AAAA": 29.59,
+                                                                "AAA": 31.19,
+                                                                "AA": 32.79,
+                                                                "A": 34.49,
+                                                                "BB": 37.69,
+                                                                "B": 40.99
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 65.29,
+                                                                "AAA": 68.99,
+                                                                "AA": 72.79,
+                                                                "A": 76.49,
+                                                                "BB": 84.09,
+                                                                "B": 91.59
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 146.29,
+                                                                "AAA": 153.29,
+                                                                "AA": 160.29,
+                                                                "A": 167.19,
+                                                                "BB": 181.19,
+                                                                "B": 195.09
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "100M": {
+                                                                "AAAA": 67.49,
+                                                                "AAA": 70.69,
+                                                                "AA": 73.99,
+                                                                "A": 77.29,
+                                                                "BB": 83.89,
+                                                                "B": 90.49
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 145.99,
+                                                                "AAA": 153.39,
+                                                                "AA": 160.89,
+                                                                "A": 168.29,
+                                                                "BB": 183.19,
+                                                                "B": 198.09
+                                                        },
+                                                        "400M": {
+                                                                "AAAA": 312.49,
+                                                                "AAA": 327.39,
+                                                                "AA": 342.29,
+                                                                "A": 357.19,
+                                                                "BB": 386.89,
+                                                                "B": 416.69
+                                                        }
+                                                }
+                                        }
+                                }
+                        },
+                        "LCM": {
+                                "F": {
+                                        "10U": {
+                                                "Freestyle": {
+                                                        "50M": {
+                                                                "B": 45.29,
+                                                                "BB": 40.89,
+                                                                "A": 36.59,
+                                                                "AA": 35.09,
+                                                                "AAA": 33.69,
+                                                                "AAAA": 32.19
+                                                        },
+                                                        "100M": {
+                                                                "B": 104.09,
+                                                                "BB": 92.99,
+                                                                "A": 81.89,
+                                                                "AA": 78.19,
+                                                                "AAA": 74.49,
+                                                                "AAAA": 70.79
+                                                        },
+                                                        "200M": {
+                                                                "B": 230.99,
+                                                                "BB": 205.69,
+                                                                "A": 180.39,
+                                                                "AA": 171.99,
+                                                                "AAA": 163.49,
+                                                                "AAAA": 155.09
+                                                        },
+                                                        "400M": {
+                                                                "B": 468.59,
+                                                                "BB": 421.69,
+                                                                "A": 374.89,
+                                                                "AA": 359.29,
+                                                                "AAA": 343.69,
+                                                                "AAAA": 327.99
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50M": {
+                                                                "B": 55.79,
+                                                                "BB": 49.69,
+                                                                "A": 43.59,
+                                                                "AA": 41.59,
+                                                                "AAA": 39.49,
+                                                                "AAAA": 37.49
+                                                        },
+                                                        "100M": {
+                                                                "B": 121.59,
+                                                                "BB": 108.09,
+                                                                "A": 94.59,
+                                                                "AA": 90.09,
+                                                                "AAA": 85.59,
+                                                                "AAAA": 81.09
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50M": {
+                                                                "B": 62.19,
+                                                                "BB": 55.49,
+                                                                "A": 48.79,
+                                                                "AA": 46.49,
+                                                                "AAA": 44.29,
+                                                                "AAAA": 42.09
+                                                        },
+                                                        "100M": {
+                                                                "B": 139.39,
+                                                                "BB": 123.89,
+                                                                "A": 108.39,
+                                                                "AA": 103.29,
+                                                                "AAA": 98.09,
+                                                                "AAAA": 92.99
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50M": {
+                                                                "B": 54.49,
+                                                                "BB": 48.09,
+                                                                "A": 41.59,
+                                                                "AA": 39.49,
+                                                                "AAA": 37.29,
+                                                                "AAAA": 35.19
+                                                        },
+                                                        "100M": {
+                                                                "B": 132.79,
+                                                                "BB": 115.39,
+                                                                "A": 97.99,
+                                                                "AA": 92.19,
+                                                                "AAA": 86.39,
+                                                                "AAAA": 80.59
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "200M": {
+                                                                "B": 255.69,
+                                                                "BB": 228.89,
+                                                                "A": 202.09,
+                                                                "AA": 193.09,
+                                                                "AAA": 184.19,
+                                                                "AAAA": 175.29
+                                                        }
+                                                }
+                                        }
+                                },
+                                "M": {
+                                        "11-12": {
+                                                "Freestyle": {
+                                                        "50M": {
+                                                                "AAAA": 28.09,
+                                                                "AAA": 29.39,
+                                                                "AA": 30.69,
+                                                                "A": 32.09,
+                                                                "BB": 34.79,
+                                                                "B": 37.39
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 61.59,
+                                                                "AAA": 64.49,
+                                                                "AA": 67.49,
+                                                                "A": 70.39,
+                                                                "BB": 76.19,
+                                                                "B": 82.09
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 134.39,
+                                                                "AAA": 140.79,
+                                                                "AA": 147.19,
+                                                                "A": 153.59,
+                                                                "BB": 166.39,
+                                                                "B": 179.19
+                                                        },
+                                                        "400M": {
+                                                                "AAAA": 285.89,
+                                                                "AAA": 299.49,
+                                                                "AA": 313.09,
+                                                                "A": 326.69,
+                                                                "BB": 353.89,
+                                                                "B": 381.09
+                                                        },
+                                                        "800M": {
+                                                                "AAAA": 600.09,
+                                                                "AAA": 628.69,
+                                                                "AA": 657.29,
+                                                                "A": 685.89,
+                                                                "BB": 742.99,
+                                                                "B": 800.19
+                                                        },
+                                                        "1500M": {
+                                                                "AAAA": 1163.89,
+                                                                "AAA": 1219.29,
+                                                                "AA": 1274.69,
+                                                                "A": 1330.19,
+                                                                "BB": 1440.99,
+                                                                "B": 1551.79
+                                                        }
+                                                },
+                                                "Back Stroke": {
+                                                        "50M": {
+                                                                "AAAA": 32.59,
+                                                                "AAA": 34.29,
+                                                                "AA": 35.99,
+                                                                "A": 37.69,
+                                                                "BB": 41.09,
+                                                                "B": 44.49
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 70.39,
+                                                                "AAA": 74.29,
+                                                                "AA": 78.09,
+                                                                "A": 81.89,
+                                                                "BB": 89.59,
+                                                                "B": 97.19
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 152.19,
+                                                                "AAA": 159.49,
+                                                                "AA": 166.69,
+                                                                "A": 173.99,
+                                                                "BB": 188.49,
+                                                                "B": 202.99
+                                                        }
+                                                },
+                                                "Breast Stroke": {
+                                                        "50M": {
+                                                                "AAAA": 36.09,
+                                                                "AAA": 38.09,
+                                                                "AA": 39.99,
+                                                                "A": 41.99,
+                                                                "BB": 45.89,
+                                                                "B": 49.79
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 78.99,
+                                                                "AAA": 83.09,
+                                                                "AA": 87.19,
+                                                                "A": 91.29,
+                                                                "BB": 99.59,
+                                                                "B": 107.79
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 170.99,
+                                                                "AAA": 179.09,
+                                                                "AA": 187.19,
+                                                                "A": 195.39,
+                                                                "BB": 211.59,
+                                                                "B": 227.89
+                                                        }
+                                                },
+                                                "Butterfly": {
+                                                        "50M": {
+                                                                "AAAA": 30.29,
+                                                                "AAA": 31.99,
+                                                                "AA": 33.59,
+                                                                "A": 35.29,
+                                                                "BB": 38.69,
+                                                                "B": 41.99
+                                                        },
+                                                        "100M": {
+                                                                "AAAA": 67.79,
+                                                                "AAA": 71.69,
+                                                                "AA": 75.59,
+                                                                "A": 79.49,
+                                                                "BB": 87.29,
+                                                                "B": 95.09
+                                                        },
+                                                        "200M": {
+                                                                "AAAA": 153.59,
+                                                                "AAA": 160.89,
+                                                                "AA": 168.29,
+                                                                "A": 175.59,
+                                                                "BB": 190.19,
+                                                                "B": 204.79
+                                                        }
+                                                },
+                                                "Individual Medley": {
+                                                        "200M": {
+                                                                "AAAA": 150.59,
+                                                                "AAA": 158.29,
+                                                                "AA": 165.99,
+                                                                "A": 173.69,
+                                                                "BB": 188.99,
+                                                                "B": 204.39
+                                                        },
+                                                        "400M": {
+                                                                "AAAA": 328.39,
+                                                                "AAA": 344.09,
+                                                                "AA": 359.69,
+                                                                "A": 375.39,
+                                                                "BB": 406.59,
+                                                                "B": 437.89
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                }
         }
-      }
+}
     </script>
 
     <script>
       const dashboardConfig = JSON.parse(
         document.getElementById("dashboardConfig").textContent,
       );
-      // Fix an accidental non-numeric placeholder left in the pasted config (defensive; keeps app from crashing if edited by hand).
-      if (
-        dashboardConfig.standards &&
-        dashboardConfig.standards.F &&
-        dashboardConfig.standards.F.Freestyle &&
-        dashboardConfig.standards.F.Freestyle["50M"] &&
-        typeof dashboardConfig.standards.F.Freestyle["50M"].AAAA !== "number"
-      ) {
-        dashboardConfig.standards.F.Freestyle["50M"].AAAA = 31.29;
-      }
       const strokeOrder = [
         "Freestyle",
         "Back Stroke",
@@ -1206,6 +2056,7 @@
       let sortState = { field: "date", direction: "asc" };
       let historyPage = 1;
       let historyPageSize = 25;
+      let progressCourse = "M";
 
       function profile() {
         return (
@@ -1224,6 +2075,26 @@
         const [y, m, d] = iso.split("-");
         return `${m}-${d}-${y}`;
       }
+      function formatSwimTime(seconds) {
+        if (seconds == null || Number.isNaN(Number(seconds))) return "—";
+        const value = Number(seconds);
+        if (value < 60) return `${value.toFixed(2)} sec`;
+        const minutes = Math.floor(value / 60);
+        const remainder = value - minutes * 60;
+        return `${minutes}:${remainder.toFixed(3).padStart(6, "0")}`;
+      }
+      function formatTimeOnly(seconds) {
+        if (seconds == null || Number.isNaN(Number(seconds))) return "—";
+        const value = Number(seconds);
+        if (value < 60) return value.toFixed(2);
+        const minutes = Math.floor(value / 60);
+        const remainder = value - minutes * 60;
+        return `${minutes}:${remainder.toFixed(3).padStart(6, "0")}`;
+      }
+      function courseFromDistance(distance) {
+        const match = String(distance).match(/[MY]$/);
+        return match ? match[0] : null;
+      }
       function distanceSortValue(d) {
         const m = String(d).match(/^(\d+)([MY])$/);
         if (!m) return 999999;
@@ -1233,6 +2104,7 @@
         return {
           year: document.getElementById("year").value,
           stroke: document.getElementById("stroke").value,
+          course: document.getElementById("course").value,
           distance: document.getElementById("distance").value,
         };
       }
@@ -1246,17 +2118,25 @@
             (b.maxAge === undefined || age <= b.maxAge),
         );
       }
-      function getStandardTable(stroke, distance, age, gender) {
+      function standardCourseForDistance(distance) {
+        const suffix = courseFromDistance(distance);
+        if (suffix === "Y") return "SCY";
+        if (suffix === "M") return "SCM";
+        return null;
+      }
+      function getStandardTable(stroke, distance, age, gender, explicitCourse = null) {
         if (age == null || !gender) return null;
         const bracket = getAgeBracket(age);
         if (!bracket) return null;
-        const s = dashboardConfig.standards;
+        const courseCode = explicitCourse || standardCourseForDistance(distance);
+        const root = dashboardConfig.usaStandards && dashboardConfig.usaStandards.courses;
         return (
-          (s &&
-            s[gender] &&
-            s[gender][stroke] &&
-            s[gender][stroke][distance] &&
-            s[gender][stroke][distance][bracket.key]) ||
+          (root &&
+            root[courseCode] &&
+            root[courseCode][gender] &&
+            root[courseCode][gender][bracket.key] &&
+            root[courseCode][gender][bracket.key][stroke] &&
+            root[courseCode][gender][bracket.key][stroke][distance]) ||
           null
         );
       }
@@ -1289,7 +2169,7 @@
         const cls = result.level ? `sb-${result.level}` : "sb-none";
         let title = "";
         if (result.next && result.gap !== null) {
-          title = `Next: ${result.next} (-${result.gap.toFixed(2)}s away)`;
+          title = `Next: ${result.next} (-${formatSwimTime(result.gap)} away)`;
         } else if (!result.next && result.level) {
           title = "Top configured standard achieved!";
         } else if (!result.level) {
@@ -1306,6 +2186,7 @@
           .age;
       }
       function currentAgeForSwimmer() {
+        if (profile().currentAge != null) return profile().currentAge;
         const ages = data()
           .map((r) => r.age)
           .filter((a) => a != null);
@@ -1321,24 +2202,31 @@
           years.map((y) => `<option value="${y}">${y}</option>`).join("");
       }
       function buildDistanceFilterAndTabs() {
+        const selectedCourse = document.getElementById("course").value;
         const distances = [
           ...new Set([
             ...data().map((r) => r.distance),
             ...goals().map((g) => g.distance),
           ]),
-        ].sort((a, b) => distanceSortValue(a) - distanceSortValue(b));
-        const standard = ["25M", "50M", "100M", "200M"];
-        const all = [...standard, ...distances].filter(
-          (v, i, a) => a.indexOf(v) === i,
-        );
+        ];
+        const standard = [
+          "25M", "50M", "100M", "200M", "400M", "800M", "1500M",
+          "25Y", "50Y", "100Y", "200Y", "500Y", "1000Y"
+        ];
+        const allDistances = [...standard, ...distances]
+          .filter((v, i, a) => a.indexOf(v) === i)
+          .filter((d) => selectedCourse === "All" || courseFromDistance(d) === selectedCourse)
+          .sort((a, b) => distanceSortValue(a) - distanceSortValue(b));
         const select = document.getElementById("distance");
+        const previous = select.value;
         select.innerHTML =
           '<option value="All">All</option>' +
-          all.map((d) => `<option value="${d}">${d}</option>`).join("");
+          allDistances.map((d) => `<option value="${d}">${d}</option>`).join("");
+        select.value = allDistances.includes(previous) ? previous : "All";
         const tabs = document.getElementById("distanceTabs");
         tabs.innerHTML =
           '<button class="distance-tab active" data-distance="All">All Distances</button>' +
-          all
+          allDistances
             .map(
               (d) =>
                 `<button class="distance-tab" data-distance="${d}">${d}</button>`,
@@ -1352,19 +2240,21 @@
         );
       }
       function filteredRecords() {
-        const { year, stroke, distance } = selectedValues();
+        const { year, stroke, course, distance } = selectedValues();
         return data().filter(
           (r) =>
             (year === "All" || String(r.year) === year) &&
             (stroke === "All" || r.stroke === stroke) &&
+            (course === "All" || courseFromDistance(r.distance) === course) &&
             (distance === "All" || r.distance === distance),
         );
       }
       function filteredGoals() {
-        const { stroke, distance } = selectedValues();
+        const { stroke, course, distance } = selectedValues();
         return goals().filter(
           (g) =>
             (stroke === "All" || g.stroke === stroke) &&
+            (course === "All" || courseFromDistance(g.distance) === course) &&
             (distance === "All" || g.distance === distance),
         );
       }
@@ -1452,7 +2342,7 @@
             const table = getStandardTable(r.stroke, r.distance, r.age, gender);
             const std = evaluateStandard(r.time, table);
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${formatDate(r.date)}</td><td>${r.year}</td><td>${r.stroke}</td><td>${r.distance}</td><td>${r.time.toFixed(2)}</td><td>${standardBadgeHtml(std)}</td><td>${r.meet}</td>`;
+            tr.innerHTML = `<td>${formatDate(r.date)}</td><td>${r.year}</td><td>${r.stroke}</td><td>${r.distance}</td><td>${formatSwimTime(r.time)}</td><td>${standardBadgeHtml(std)}</td><td>${r.meet}</td>`;
             tbody.appendChild(tr);
           });
         }
@@ -1474,7 +2364,13 @@
       }
 
       function renderChart() {
-        const filtered = filteredRecords();
+        const { year, stroke, distance } = selectedValues();
+        const filtered = data().filter((r) =>
+          (year === "All" || String(r.year) === year) &&
+          (stroke === "All" || r.stroke === stroke) &&
+          courseFromDistance(r.distance) === progressCourse &&
+          (distance === "All" || courseFromDistance(distance) !== progressCourse || r.distance === distance)
+        );
         const labels = [...new Set(filtered.map((r) => r.date))]
           .sort((a, b) => new Date(a) - new Date(b))
           .map(formatDate);
@@ -1525,7 +2421,7 @@
                 callbacks: {
                   title: (items) => (items.length ? items[0].raw.x : ""),
                   label: (item) =>
-                    `${item.dataset.label}: ${item.raw.y.toFixed(2)} sec — ${item.raw.meet}`,
+                    `${item.dataset.label}: ${formatSwimTime(item.raw.y)} — ${item.raw.meet}`,
                 },
               },
             },
@@ -1536,10 +2432,11 @@
                 title: { display: true, text: "Meet Date (MM-DD-YYYY)" },
               },
               y: {
-                reverse: true,
+                reverse: false,
+                ticks: { callback: (value) => formatTimeOnly(value) },
                 title: {
                   display: true,
-                  text: "Time in Seconds (Lower Is Faster)",
+                  text: "Swim Time (Lower Is Faster)",
                 },
               },
             },
@@ -1596,7 +2493,7 @@
               tooltip: {
                 callbacks: {
                   label: (item) =>
-                    `${item.dataset.label}: ${item.raw.y.toFixed(2)} sec — ${item.raw.meet}`,
+                    `${item.dataset.label}: ${formatSwimTime(item.raw.y)} — ${item.raw.meet}`,
                 },
               },
             },
@@ -1607,8 +2504,9 @@
                 title: { display: true, text: "PB Date (MM-DD-YYYY)" },
               },
               y: {
-                reverse: true,
-                title: { display: true, text: "Personal Best Time (seconds)" },
+                reverse: false,
+                ticks: { callback: (value) => formatTimeOnly(value) },
+                title: { display: true, text: "Personal Best Time (Lower Is Faster)" },
               },
             },
           },
@@ -1633,13 +2531,13 @@
           const card = document.createElement("div");
           card.className = "goal-card";
           const pbText =
-            p.pb === null ? "No recorded swim" : `${p.pb.toFixed(2)} sec`;
+            p.pb === null ? "No recorded swim" : formatSwimTime(p.pb);
           const remain =
-            p.remaining === null ? "—" : `${p.remaining.toFixed(2)} sec`;
+            p.remaining === null ? "—" : formatSwimTime(p.remaining);
           let standardHtml = "";
           if (stdTable) {
             const nextLine = std.next
-              ? `<div class="standard-next">Next: ${std.next} — ${std.gap.toFixed(2)}s away</div>`
+              ? `<div class="standard-next">Next: ${std.next} — ${formatSwimTime(std.gap)} away</div>`
               : std.level
                 ? `<div class="standard-next">Top configured standard reached for this age group 🏅</div>`
                 : `<div class="standard-next">Not yet at the first configured standard</div>`;
@@ -1647,7 +2545,7 @@
           } else {
             standardHtml = `<div class="standard-next">No official standard published for this distance/age group.</div>`;
           }
-          card.innerHTML = `<div class="goal-title">${g.stroke} · ${g.distance}</div><div class="goal-meta">${g.label || "Goal"}</div><div class="goal-row"><span>Current PB</span><strong>${pbText}</strong></div><div class="goal-row"><span>Target</span><strong>${Number(g.target).toFixed(2)} sec</strong></div><div class="progress-track"><div class="progress-fill" style="width:${p.percent.toFixed(1)}%"></div></div><div class="goal-row"><span>Progress</span><strong>${p.percent.toFixed(0)}%</strong></div><div class="goal-row"><span>Remaining</span><strong>${remain}</strong></div>${p.met ? '<div class="note"><strong>Goal achieved ✓</strong></div>' : ""}${standardHtml}`;
+          card.innerHTML = `<div class="goal-title">${g.stroke} · ${g.distance}</div><div class="goal-meta">${g.label || "Goal"}</div><div class="goal-row"><span>Current PB</span><strong>${pbText}</strong></div><div class="goal-row"><span>Target</span><strong>${formatSwimTime(Number(g.target))}</strong></div><div class="progress-track"><div class="progress-fill" style="width:${p.percent.toFixed(1)}%"></div></div><div class="goal-row"><span>Progress</span><strong>${p.percent.toFixed(0)}%</strong></div><div class="goal-row"><span>Remaining</span><strong>${remain}</strong></div>${p.met ? '<div class="note"><strong>Goal achieved ✓</strong></div>' : ""}${standardHtml}`;
           grid.appendChild(card);
         });
       }
@@ -1707,10 +2605,11 @@
           scope === "Lifetime" || selectedYear === "All"
             ? [...data()]
             : data().filter((r) => String(r.year) === selectedYear);
-        const { stroke, distance } = selectedValues();
+        const { stroke, course, distance } = selectedValues();
         source = source.filter(
           (r) =>
             (stroke === "All" || r.stroke === stroke) &&
+            (course === "All" || courseFromDistance(r.distance) === course) &&
             (distance === "All" || r.distance === distance),
         );
         const groups = {};
@@ -1737,14 +2636,14 @@
           const std = evaluateStandard(r.time, table);
           const nextLine = table
             ? std.next
-              ? `<div class="standard-next">Next: ${std.next} — ${std.gap.toFixed(2)}s away</div>`
+              ? `<div class="standard-next">Next: ${std.next} — ${formatSwimTime(std.gap)} away</div>`
               : std.level
                 ? `<div class="standard-next">Top configured standard 🏅</div>`
                 : ""
             : `<div class="standard-next">No official standard for this distance/age group.</div>`;
           const card = document.createElement("div");
           card.className = "pb-card";
-          card.innerHTML = `<div class="pb-title">${r.stroke} · ${r.distance}</div><div class="pb-time">${r.time.toFixed(2)} sec</div><div class="pb-meta">${r.meet}<br>${formatDate(r.date)}<br>${scope === "SelectedYear" && selectedYear !== "All" ? selectedYear + " PB" : "Lifetime PB"}</div><div class="goal-row" style="margin-top:10px;"><span>Standard (age ${r.age})</span>${standardBadgeHtml(std)}</div>${nextLine}`;
+          card.innerHTML = `<div class="pb-title">${r.stroke} · ${r.distance}</div><div class="pb-time">${formatSwimTime(r.time)}</div><div class="pb-meta">${r.meet}<br>${formatDate(r.date)}<br>${scope === "SelectedYear" && selectedYear !== "All" ? selectedYear + " PB" : "Lifetime PB"}</div><div class="goal-row" style="margin-top:10px;"><span>Standard (age ${r.age})</span>${standardBadgeHtml(std)}</div>${nextLine}`;
           grid.appendChild(card);
         });
       }
@@ -1757,49 +2656,65 @@
         const gender = profile().gender;
         const bracket = age != null ? getAgeBracket(age) : null;
         const genderLabel = gender === "F" ? "Girls" : gender === "M" ? "Boys" : gender;
-        if (gender === "F") {
-          noteEl.innerHTML = `Real <strong>USA Swimming Motivational Time Standards (2024–2028, SCM, ${bracket ? bracket.key : ""} ${genderLabel})</strong> are used for ${profile().name}. Official standards are only published at 50M and above — since her recorded meets are all 25M, most of her swims will show "N/A" here until she starts racing 50M events.`;
-        } else {
-          noteEl.innerHTML = `<strong>Heads up:</strong> the cut times for ${profile().name} are still placeholder example values, not official published times. Replace the <code>standards.${gender}</code> block in the embedded <code>dashboardConfig</code> JSON with real USA Swimming or league standards for ${genderLabel}'s ${bracket ? bracket.key : ""} to make this accurate.`;
-        }
+        const selectedCourse = document.getElementById("course").value;
+        const courseCodes = selectedCourse === "Y" ? ["SCY"] : selectedCourse === "M" ? ["SCM"] : ["SCY", "SCM"];
+        const source = dashboardConfig.usaStandards || {};
+
+        noteEl.innerHTML = bracket
+          ? `<strong>${source.source || "USA Swimming Motivational Standards"}</strong> are being applied to ${profile().name} as <strong>${bracket.key} ${genderLabel}</strong> (current age ${age}). Yard events use <strong>SCY</strong>; meter events use <strong>SCM</strong>. LCM standards from the source PDF are also embedded in the JSON for future records that explicitly identify long-course meters.`
+          : `No USA Swimming age bracket is configured for age ${age ?? "unknown"}.`;
+
         if (!bracket) {
-          container.innerHTML =
-            '<div class="empty">No age-group standards configured for this swimmer\'s current age.</div>';
+          container.innerHTML = '<div class="empty">No age-group standards configured for this swimmer\'s current age.</div>';
           return;
         }
+
         const levels = dashboardConfig.standardsLevels || [];
-        const rows = [];
-        strokeOrder.forEach((stroke) => {
-          const distMap = (dashboardConfig.standards &&
-            dashboardConfig.standards[gender] &&
-            dashboardConfig.standards[gender][stroke]) || {};
-          Object.keys(distMap).forEach((distance) => {
-            const table = distMap[distance][bracket.key];
-            if (table) rows.push({ stroke, distance, table });
+        const sections = [];
+        courseCodes.forEach((courseCode) => {
+          const group = source.courses && source.courses[courseCode] && source.courses[courseCode][gender] && source.courses[courseCode][gender][bracket.key];
+          if (!group) return;
+          const rows = [];
+          strokeOrder.forEach((stroke) => {
+            const distMap = group[stroke] || {};
+            Object.keys(distMap)
+              .sort((a, b) => distanceSortValue(a) - distanceSortValue(b))
+              .forEach((distance) => rows.push({ stroke, distance, table: distMap[distance] }));
           });
+          if (rows.length) sections.push({ courseCode, rows });
         });
-        if (!rows.length) {
-          container.innerHTML = `<div class="empty">No standards configured for the ${bracket.key} ${genderLabel} age group yet.</div>`;
+
+        if (!sections.length) {
+          container.innerHTML = `<div class="empty">No official standards are embedded for the ${bracket.key} ${genderLabel} group and selected course.</div>`;
           return;
         }
-        let html = `<div style="overflow-x:auto;"><table><thead><tr><th>Event</th>${levels.map((l) => `<th>${l}</th>`).join("")}</tr></thead><tbody>`;
-        rows.forEach(({ stroke, distance, table }) => {
-          const best = currentPB(stroke, distance);
-          const std = best !== null ? evaluateStandard(best, table) : null;
-          html += `<tr><td>${stroke} · ${distance}${best !== null ? `<div class="standard-next" style="margin-top:2px;">PB: ${best.toFixed(2)}s</div>` : ""}</td>`;
-          html += levels
-            .map((l) => {
+
+        let html = "";
+        sections.forEach(({ courseCode, rows }) => {
+          const courseLabel = courseCode === "SCY" ? "Short Course Yards (SCY)" : "Short Course Meters (SCM)";
+          html += `<h3 style="margin:14px 0 8px;">${courseLabel}</h3>`;
+          html += `<div style="overflow-x:auto;"><table><thead><tr><th>Event</th>${levels.map((l) => `<th>${l}</th>`).join("")}</tr></thead><tbody>`;
+          rows.forEach(({ stroke, distance, table }) => {
+            const best = currentPB(stroke, distance);
+            const std = best !== null ? evaluateStandard(best, table) : null;
+            html += `<tr><td>${stroke} · ${distance}${best !== null ? `<div class="standard-next" style="margin-top:2px;">PB: ${formatSwimTime(best)} · ${standardBadgeHtml(std)}</div>` : ""}</td>`;
+            html += levels.map((l) => {
               const cutoff = table[l];
               const hit = std && std.level === l;
-              return `<td style="${hit ? "background:#e8f5e9;font-weight:800;" : ""}">${typeof cutoff === "number" ? cutoff.toFixed(2) : "—"}</td>`;
-            })
-            .join("");
-          html += "</tr>";
+              return `<td style="${hit ? "background:#e8f5e9;font-weight:800;" : ""}">${typeof cutoff === "number" ? formatTimeOnly(cutoff) : "—"}</td>`;
+            }).join("");
+            html += "</tr>";
+          });
+          html += "</tbody></table></div>";
         });
-        html += "</tbody></table></div>";
         container.innerHTML = html;
       }
 
+      function syncProgressCourseTabs() {
+        document.querySelectorAll("[data-progress-course]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.progressCourse === progressCourse);
+        });
+      }
       function syncTabs() {
         const current = document.getElementById("distance").value;
         document
@@ -1809,6 +2724,7 @@
           );
       }
       function renderAll() {
+        syncProgressCourseTabs();
         syncTabs();
         document.getElementById("activeSwimmerName").textContent =
           profile().name;
@@ -1828,6 +2744,8 @@
             btn.classList.toggle("active", btn.dataset.swimmer === key),
           );
         document.getElementById("stroke").value = "All";
+        document.getElementById("course").value = "All";
+        progressCourse = "M";
         buildYearFilter();
         buildDistanceFilterAndTabs();
         document.getElementById("distance").value = "All";
@@ -1837,6 +2755,23 @@
 
       ["year", "stroke", "distance", "pbScope"].forEach((id) =>
         document.getElementById(id).addEventListener("change", () => { historyPage = 1; renderAll(); }),
+      );
+      document.getElementById("course").addEventListener("change", () => {
+        const selectedCourse = document.getElementById("course").value;
+        if (selectedCourse === "M" || selectedCourse === "Y") progressCourse = selectedCourse;
+        buildDistanceFilterAndTabs();
+        historyPage = 1;
+        renderAll();
+      });
+      document.querySelectorAll("[data-progress-course]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          progressCourse = btn.dataset.progressCourse;
+          document.getElementById("course").value = progressCourse;
+          document.getElementById("distance").value = "All";
+          buildDistanceFilterAndTabs();
+          historyPage = 1;
+          renderAll();
+        }),
       );
       document
         .querySelectorAll(".swimmer-tab")
