@@ -101,6 +101,15 @@
         background: var(--accent);
         border-color: var(--accent);
         color: #fff;
+        box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.18);
+        transform: translateY(-1px);
+      }
+
+      #progressCourseTabs .distance-tab.active {
+        background: #0d47a1;
+        border-color: #0d47a1;
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.22);
       }
       table {
         width: 100%;
@@ -2660,9 +2669,13 @@
         const courseCodes = selectedCourse === "Y" ? ["SCY"] : selectedCourse === "M" ? ["SCM"] : ["SCY", "SCM"];
         const source = dashboardConfig.usaStandards || {};
 
+        const standardsDate = source.documentTimestamp
+          ? source.documentTimestamp.split(" ")[0]
+          : "Not specified";
+
         noteEl.innerHTML = bracket
-          ? `<strong>${source.source || "USA Swimming Motivational Standards"}</strong> are being applied to ${profile().name} as <strong>${bracket.key} ${genderLabel}</strong> (current age ${age}). Yard events use <strong>SCY</strong>; meter events use <strong>SCM</strong>. LCM standards from the source PDF are also embedded in the JSON for future records that explicitly identify long-course meters.`
-          : `No USA Swimming age bracket is configured for age ${age ?? "unknown"}.`;
+          ? `<strong>${source.source || "USA Swimming Motivational Standards"}</strong> are being applied to ${profile().name} as <strong>${bracket.key} ${genderLabel}</strong> (current age ${age}). <strong>Standards date: ${standardsDate}</strong>. Yard events use <strong>SCY</strong>; meter events use <strong>SCM</strong>. LCM standards from the source PDF are also embedded in the JSON for future records that explicitly identify long-course meters.`
+          : `No USA Swimming age bracket is configured for age ${age ?? "unknown"}. <strong>Standards date: ${standardsDate}</strong>.`;
 
         if (!bracket) {
           container.innerHTML = '<div class="empty">No age-group standards configured for this swimmer\'s current age.</div>';
