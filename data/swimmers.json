@@ -1,0 +1,26 @@
+{
+  "dataVersion": "2.0",
+  "lastSynced": "2026-09-29 15:36:00",
+  "swimmers": [
+    {
+      "id": "sofia-li",
+      "name": "Sofia Li",
+      "gender": "F",
+      "birthDate": null,
+      "currentAge": 7,
+      "team": null,
+      "active": true,
+      "dataFile": "data/swimmers/sofia-li.json"
+    },
+    {
+      "id": "noah-lau",
+      "name": "Noah Lau",
+      "gender": "M",
+      "birthDate": null,
+      "currentAge": 12,
+      "team": null,
+      "active": true,
+      "dataFile": "data/swimmers/noah-lau.json"
+    }
+  ]
+}

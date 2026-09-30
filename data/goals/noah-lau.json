@@ -1,0 +1,53 @@
+{
+  "swimmerId": "noah-lau",
+  "goals": [
+    {
+      "stroke": "Freestyle",
+      "distance": 50,
+      "target": 35,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "50M"
+    },
+    {
+      "stroke": "Back Stroke",
+      "distance": 50,
+      "target": 40,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "50M"
+    },
+    {
+      "stroke": "Breast Stroke",
+      "distance": 50,
+      "target": 40,
+      "label": "Development Goal",
+      "course": "SCM",
+      "legacyDistance": "50M"
+    },
+    {
+      "stroke": "Butterfly",
+      "distance": 25,
+      "target": 16,
+      "label": "Development Goal",
+      "course": "SCM",
+      "legacyDistance": "25M"
+    },
+    {
+      "stroke": "Butterfly",
+      "distance": 50,
+      "target": 33.5,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "50M"
+    },
+    {
+      "stroke": "Individual Medley",
+      "distance": 100,
+      "target": 80,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "100M"
+    }
+  ]
+}

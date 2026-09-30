@@ -1,0 +1,37 @@
+{
+  "swimmerId": "sofia-li",
+  "goals": [
+    {
+      "stroke": "Freestyle",
+      "distance": 25,
+      "target": 26.5,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "25M"
+    },
+    {
+      "stroke": "Back Stroke",
+      "distance": 25,
+      "target": 29.5,
+      "label": "Next Goal",
+      "course": "SCM",
+      "legacyDistance": "25M"
+    },
+    {
+      "stroke": "Breast Stroke",
+      "distance": 25,
+      "target": 34,
+      "label": "Development Goal",
+      "course": "SCM",
+      "legacyDistance": "25M"
+    },
+    {
+      "stroke": "Butterfly",
+      "distance": 25,
+      "target": 32,
+      "label": "Development Goal",
+      "course": "SCM",
+      "legacyDistance": "25M"
+    }
+  ]
+}
