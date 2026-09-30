@@ -332,19 +332,15 @@
   </head>
   <body>
     <div class="container">
-      <div class="swimmer-tabs" aria-label="Swimmer tabs">
-        <button class="swimmer-tab active" data-swimmer="sofia">
-          Sofia Li
-        </button>
-        <button class="swimmer-tab" data-swimmer="noah">Noah Lau</button>
-      </div>
-
       <div class="card">
         <h1>
-          &#129416; <span id="activeSwimmerName">Sofia Li</span> Swimmer
-          Progress Dashboard
+          &#128044; Swimmer Progress Dashboard
         </h1>
         <div class="filters">
+          <div class="filter-group">
+            <label for="swimmerSelect">Swimmer</label>
+            <select id="swimmerSelect"></select>
+          </div>
           <div class="filter-group">
             <label for="year">Year</label
             ><select id="year"></select>
@@ -386,17 +382,9 @@
             <button class="distance-tab active" type="button" data-progress-course="M">Meters</button>
             <button class="distance-tab" type="button" data-progress-course="Y">Yards</button>
           </div>
-          <div
-            class="distance-tabs"
-            id="distanceTabs"
-            aria-label="Distance tabs"
-          ></div>
           <div id="progressLegend" class="chart-legend" aria-label="Progress chart legend"></div>
           <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
-          <div class="note">
-            Use the Meters and Yards tabs to compare each course separately.
-            Lower times are faster, so improvement trends downward.
-          </div>
+          <div class="note">Use the Meters and Yards tabs to switch courses. Lower times are faster, so improvement trends downward.</div>
         </div>
       </details>
 
@@ -2062,10 +2050,10 @@
       ];
       let activeSwimmer = "sofia";
       let chart, pbChart, radarChart;
-      let sortState = { field: "date", direction: "asc" };
+      let progressCourse = "M";
+      let sortState = { field: "date", direction: "desc" };
       let historyPage = 1;
       let historyPageSize = 25;
-      let progressCourse = "M";
 
       function profile() {
         return (
@@ -2202,6 +2190,14 @@
         return ages.length ? Math.max(...ages) : null;
       }
 
+      function buildSwimmerFilter() {
+        const select = document.getElementById("swimmerSelect");
+        select.innerHTML = Object.entries(swimmerData)
+          .map(([key, p]) => `<option value="${key}">${p.name}</option>`)
+          .join("");
+        select.value = activeSwimmer;
+      }
+
       function buildYearFilter() {
         const years = [...new Set(data().map((r) => r.year))].sort(
           (a, b) => a - b,
@@ -2232,21 +2228,26 @@
           '<option value="All">All</option>' +
           allDistances.map((d) => `<option value="${d}">${d}</option>`).join("");
         select.value = allDistances.includes(previous) ? previous : "All";
+        // The Progress by Stroke section now uses separate Meters and Yards charts,
+        // so distance tabs may not exist. Keep this optional for compatibility.
         const tabs = document.getElementById("distanceTabs");
-        tabs.innerHTML =
-          '<button class="distance-tab active" data-distance="All">All Distances</button>' +
-          allDistances
-            .map(
-              (d) =>
-                `<button class="distance-tab" data-distance="${d}">${d}</button>`,
-            )
-            .join("");
-        tabs.querySelectorAll(".distance-tab").forEach((btn) =>
-          btn.addEventListener("click", () => {
-            select.value = btn.dataset.distance;
-            renderAll();
-          }),
-        );
+        if (tabs) {
+          tabs.innerHTML =
+            '<button class="distance-tab active" data-distance="All">All Distances</button>' +
+            allDistances
+              .map(
+                (d) =>
+                  `<button class="distance-tab" data-distance="${d}">${d}</button>`,
+              )
+              .join("");
+          tabs.querySelectorAll(".distance-tab").forEach((btn) =>
+            btn.addEventListener("click", () => {
+              select.value = btn.dataset.distance;
+              historyPage = 1;
+              renderAll();
+            }),
+          );
+        }
       }
       function filteredRecords() {
         const { year, stroke, course, distance } = selectedValues();
@@ -2372,13 +2373,13 @@
         });
       }
 
-      function renderChart() {
+      function renderProgressChart() {
         const { year, stroke, distance } = selectedValues();
         const filtered = data().filter((r) =>
           (year === "All" || String(r.year) === year) &&
           (stroke === "All" || r.stroke === stroke) &&
           courseFromDistance(r.distance) === progressCourse &&
-          (distance === "All" || courseFromDistance(distance) !== progressCourse || r.distance === distance)
+          (distance === "All" || courseFromDistance(distance) !== courseCode || r.distance === distance)
         );
         const labels = [...new Set(filtered.map((r) => r.date))]
           .sort((a, b) => new Date(a) - new Date(b))
@@ -2399,19 +2400,9 @@
           const color = seriesPalette[index % seriesPalette.length];
           return {
             label: `${stroke} · ${distance}`,
-            data: rows.map((r) => ({
-              x: formatDate(r.date),
-              y: r.time,
-              meet: r.meet,
-            })),
-            parsing: false,
-            borderColor: color,
-            backgroundColor: color,
-            tension: 0.2,
-            fill: false,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            spanGaps: false,
+            data: rows.map((r) => ({ x: formatDate(r.date), y: r.time, meet: r.meet })),
+            parsing: false, borderColor: color, backgroundColor: color, tension: 0.2,
+            fill: false, pointRadius: 5, pointHoverRadius: 7, spanGaps: false,
           };
         });
         renderHtmlLegend("progressLegend", datasets);
@@ -2420,36 +2411,27 @@
           type: "line",
           data: { datasets },
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            parsing: false,
+            responsive: true, maintainAspectRatio: false, parsing: false,
             interaction: { mode: "nearest", intersect: false },
             plugins: {
               legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  title: (items) => (items.length ? items[0].raw.x : ""),
-                  label: (item) =>
-                    `${item.dataset.label}: ${formatSwimTime(item.raw.y)} — ${item.raw.meet}`,
-                },
-              },
+              tooltip: { callbacks: {
+                title: (items) => (items.length ? items[0].raw.x : ""),
+                label: (item) => `${item.dataset.label}: ${formatSwimTime(item.raw.y)} — ${item.raw.meet}`,
+              }},
             },
             scales: {
-              x: {
-                type: "category",
-                labels,
-                title: { display: true, text: "Meet Date (MM-DD-YYYY)" },
-              },
-              y: {
-                reverse: false,
-                ticks: { callback: (value) => formatTimeOnly(value) },
-                title: {
-                  display: true,
-                  text: "Swim Time (Lower Is Faster)",
-                },
-              },
+              x: { type: "category", labels, title: { display: true, text: "Meet Date (MM-DD-YYYY)" } },
+              y: { reverse: false, ticks: { callback: (value) => formatTimeOnly(value) },
+                title: { display: true, text: "Swim Time (Lower Is Faster)" } },
             },
           },
+        });
+      }
+
+      function syncProgressCourseTabs() {
+        document.querySelectorAll("[data-progress-course]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.progressCourse === progressCourse);
         });
       }
 
@@ -2460,7 +2442,29 @@
           .map(formatDate);
         const keys = [
           ...new Set(filtered.map((r) => `${r.stroke}|${r.distance}`)),
-        ];
+        ].sort((a, b) => {
+          const [strokeA, distanceA] = a.split("|");
+          const [strokeB, distanceB] = b.split("|");
+
+          // 1. Stroke name alphabetically.
+          const strokeCompare = strokeA.localeCompare(strokeB, undefined, {
+            sensitivity: "base",
+          });
+          if (strokeCompare !== 0) return strokeCompare;
+
+          // 2. Meters before yards within each stroke.
+          const courseA = courseFromDistance(distanceA);
+          const courseB = courseFromDistance(distanceB);
+          const courseOrder = { M: 0, Y: 1 };
+          const courseCompare =
+            (courseOrder[courseA] ?? 99) - (courseOrder[courseB] ?? 99);
+          if (courseCompare !== 0) return courseCompare;
+
+          // 3. Ascending numeric distance within the same course.
+          const metersA = Number.parseInt(distanceA, 10) || 0;
+          const metersB = Number.parseInt(distanceB, 10) || 0;
+          return metersA - metersB;
+        });
         const datasets = keys.map((key, index) => {
           const [stroke, distance] = key.split("|");
           const rows = filtered
@@ -2723,11 +2727,6 @@
         container.innerHTML = html;
       }
 
-      function syncProgressCourseTabs() {
-        document.querySelectorAll("[data-progress-course]").forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.progressCourse === progressCourse);
-        });
-      }
       function syncTabs() {
         const current = document.getElementById("distance").value;
         document
@@ -2737,11 +2736,9 @@
           );
       }
       function renderAll() {
-        syncProgressCourseTabs();
         syncTabs();
-        document.getElementById("activeSwimmerName").textContent =
-          profile().name;
-        renderChart();
+        syncProgressCourseTabs();
+        renderProgressChart();
         renderPBProgress();
         renderGoals();
         renderStandardsReference();
@@ -2751,14 +2748,9 @@
       }
       function switchSwimmer(key) {
         activeSwimmer = key;
-        document
-          .querySelectorAll(".swimmer-tab")
-          .forEach((btn) =>
-            btn.classList.toggle("active", btn.dataset.swimmer === key),
-          );
+        document.getElementById("swimmerSelect").value = key;
         document.getElementById("stroke").value = "All";
         document.getElementById("course").value = "All";
-        progressCourse = "M";
         buildYearFilter();
         buildDistanceFilterAndTabs();
         document.getElementById("distance").value = "All";
@@ -2766,33 +2758,26 @@
         renderAll();
       }
 
+      document.getElementById("swimmerSelect").addEventListener("change", (e) =>
+        switchSwimmer(e.target.value),
+      );
+
+      document.querySelectorAll("[data-progress-course]").forEach((btn) =>
+        btn.addEventListener("click", () => {
+          progressCourse = btn.dataset.progressCourse;
+          syncProgressCourseTabs();
+          renderProgressChart();
+        }),
+      );
+
       ["year", "stroke", "distance", "pbScope"].forEach((id) =>
         document.getElementById(id).addEventListener("change", () => { historyPage = 1; renderAll(); }),
       );
       document.getElementById("course").addEventListener("change", () => {
-        const selectedCourse = document.getElementById("course").value;
-        if (selectedCourse === "M" || selectedCourse === "Y") progressCourse = selectedCourse;
         buildDistanceFilterAndTabs();
         historyPage = 1;
         renderAll();
       });
-      document.querySelectorAll("[data-progress-course]").forEach((btn) =>
-        btn.addEventListener("click", () => {
-          progressCourse = btn.dataset.progressCourse;
-          document.getElementById("course").value = progressCourse;
-          document.getElementById("distance").value = "All";
-          buildDistanceFilterAndTabs();
-          historyPage = 1;
-          renderAll();
-        }),
-      );
-      document
-        .querySelectorAll(".swimmer-tab")
-        .forEach((btn) =>
-          btn.addEventListener("click", () =>
-            switchSwimmer(btn.dataset.swimmer),
-          ),
-        );
       document.querySelectorAll("th[data-field]").forEach((th) =>
         th.addEventListener("click", () => {
           const field = th.dataset.field;
@@ -2833,9 +2818,10 @@
         }),
       );
 
-      buildYearFilter();
-      buildDistanceFilterAndTabs();
-      renderAll();
+      // Initialize through the same path used when the swimmer changes.
+      // This guarantees the default swimmer (Sofia) loads all dashboard data immediately.
+      buildSwimmerFilter();
+      switchSwimmer(activeSwimmer);
     </script>
   </body>
 </html>
