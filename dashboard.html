@@ -1,24 +1,102 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Swimmer Progress Dashboard</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><link rel="stylesheet" href="css/styles.css"></head><body><main class="shell">
-<div class="topbar"><a class="back-link" href="index.html">← All Swimmers</a><div class="brand">🏊 Swim Progress</div></div>
-<div id="loading" class="status">Loading swimmer dashboard…</div><div id="error" class="status error hide"></div>
-<div id="app" class="hide">
-<section class="card hero"><div><h1 id="swimmerName"></h1><div id="swimmerMeta" class="muted"></div></div><div id="sourceLinkWrap"></div></section>
-<section class="card"><div class="metric-grid"><div class="metric"><div class="muted">Lifetime PB events</div><div id="metricPBs" class="value">—</div></div><div class="metric"><div class="muted">Recorded swims</div><div id="metricResults" class="value">—</div></div><div class="metric"><div class="muted">Meets</div><div id="metricMeets" class="value">—</div></div><div class="metric"><div class="muted">Latest swim</div><div id="metricLatest" class="value" style="font-size:1.1rem">—</div></div></div></section>
-<div class="tabs" role="tablist"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="progress">Progress</button><button class="tab" data-tab="standards">Standards</button><button class="tab" data-tab="results">Results</button></div>
-<section id="tab-overview" class="tab-panel active">
-<div class="card"><div class="section-title"><h2>Next Standards</h2></div><div id="nextStandards" class="next-grid"></div></div>
-<div class="card"><div class="section-title"><h2>Personal Bests</h2><select id="pbScope"><option value="Lifetime">Lifetime</option><option value="SelectedYear">Selected year</option></select></div><div id="pbGrid" class="pb-grid"></div></div>
-<div class="card"><div class="section-title"><h2>Goal Progress</h2></div><div id="goalGrid" class="goal-grid"></div></div>
-</section>
-<section id="tab-progress" class="tab-panel">
-<div class="card"><div class="section-title"><h2>Progress by Stroke</h2><div><button class="tab active" data-course="M">Meters</button> <button class="tab" data-course="Y">Yards</button></div></div><div id="progressLegend" class="chart-legend"></div><div class="chart-wrap"><canvas id="progressChart"></canvas></div><div class="note">Lower times are faster.</div></div>
-<div class="card"><div class="section-title"><h2>PB Progress Curve</h2></div><div id="pbLegend" class="chart-legend"></div><div class="chart-wrap"><canvas id="pbProgressChart"></canvas></div></div>
-<div class="card"><div class="section-title"><h2>Stroke Radar</h2></div><div class="radar-wrap"><canvas id="strokeRadarChart"></canvas></div></div>
-</section>
-<section id="tab-standards" class="tab-panel"><div class="card"><div id="standardsNote" class="standards-note"></div><div id="standardsReference"></div></div></section>
-<section id="tab-results" class="tab-panel">
-<div class="card"><div class="filters"><div class="field"><label>Year</label><select id="year"></select></div><div class="field"><label>Stroke</label><select id="stroke"><option value="All">All</option><option>Freestyle</option><option>Back Stroke</option><option>Breast Stroke</option><option>Butterfly</option><option>Individual Medley</option></select></div><div class="field"><label>Course</label><select id="course"><option value="All">All</option><option value="M">Meters</option><option value="Y">Yards</option></select></div><div class="field"><label>Distance</label><select id="distance"></select></div></div></div>
-<div class="card"><div class="table-wrap"><table id="historyTable"><thead><tr><th data-field="date">Date</th><th data-field="year">Year</th><th data-field="stroke">Stroke</th><th data-field="distance">Distance</th><th data-field="time">Time</th><th>Standard</th><th data-field="meet">Meet</th></tr></thead><tbody></tbody></table></div><div class="pager"><div><label>Rows <select id="pageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label> <span id="pageInfo" class="muted"></span></div><div><button id="firstPage">First</button><button id="prevPage">Previous</button><button id="nextPage">Next</button><button id="lastPage">Last</button></div></div></div>
-</section>
-</div>
-</main><script type="module" src="js/dashboard.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Swimmer Progress Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<main class="shell">
+  <div class="topbar"><a class="back-link" href="index.html">← All Swimmers</a><div class="brand">🏊 Swim Progress</div></div>
+  <div id="loading" class="status">Loading swimmer dashboard…</div>
+  <div id="error" class="status error hide"></div>
+
+  <div id="app" class="hide">
+    <section class="card hero">
+      <div><h1 id="swimmerName"></h1><div id="swimmerMeta" class="muted"></div></div>
+      <div id="sourceLinkWrap"></div>
+    </section>
+
+    <section class="card">
+      <div class="metric-grid">
+        <div class="metric"><div class="muted">PB events in view</div><div id="metricPBs" class="value">—</div></div>
+        <div class="metric"><div class="muted">Swims in view</div><div id="metricResults" class="value">—</div></div>
+        <div class="metric"><div class="muted">Meets in view</div><div id="metricMeets" class="value">—</div></div>
+        <div class="metric"><div class="muted">Latest swim in view</div><div id="metricLatest" class="value metric-latest">—</div></div>
+      </div>
+    </section>
+
+    <section class="card global-filter-card" aria-label="Dashboard filters">
+      <div class="filter-heading">
+        <div>
+          <h2>View Filters</h2>
+          <div id="filterSummary" class="note">Showing all available data.</div>
+        </div>
+        <button id="resetFilters" class="secondary-button" type="button">Reset filters</button>
+      </div>
+      <div class="filters global-filters">
+        <div class="field"><label for="year">Year</label><select id="year"></select></div>
+        <div class="field"><label for="stroke">Stroke</label><select id="stroke"><option value="All">All strokes</option><option>Freestyle</option><option>Back Stroke</option><option>Breast Stroke</option><option>Butterfly</option><option>Individual Medley</option></select></div>
+        <div class="field"><label for="course">Course</label><select id="course"><option value="All">All courses</option><option value="SCM">Meters (SCM)</option><option value="SCY">Yards (SCY)</option></select></div>
+        <div class="field"><label for="distance">Distance</label><select id="distance"></select></div>
+      </div>
+    </section>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="progress">Progress</button>
+      <button class="tab" data-tab="standards">Standards</button>
+      <button class="tab" data-tab="results">Results</button>
+    </div>
+
+    <section id="tab-overview" class="tab-panel active">
+      <div class="card"><div class="section-title"><h2>Next Standards</h2></div><div id="nextStandards" class="next-grid"></div></div>
+      <div class="card"><div class="section-title"><h2>Personal Bests in Current View</h2></div><div id="pbGrid" class="pb-grid"></div></div>
+      <div class="card"><div class="section-title"><h2>Goal Progress</h2></div><div id="goalGrid" class="goal-grid"></div></div>
+    </section>
+
+    <section id="tab-progress" class="tab-panel">
+      <div class="card">
+        <div class="section-title"><h2>Progress by Stroke</h2></div>
+        <div id="progressLegend" class="chart-legend"></div>
+        <div class="chart-wrap"><canvas id="progressChart"></canvas></div>
+        <div class="note">Uses the current view filters. Lower times are faster.</div>
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>PB Progress Curve</h2></div>
+        <div id="pbLegend" class="chart-legend"></div>
+        <div class="chart-wrap"><canvas id="pbProgressChart"></canvas></div>
+        <div class="note">Shows personal-best progression only for records in the current view.</div>
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>Stroke Radar</h2></div>
+        <div class="radar-wrap"><canvas id="strokeRadarChart"></canvas></div>
+        <div class="note">Shows average PB improvement by stroke within the current view, measured from the first visible swim to the best visible swim for each event.</div>
+      </div>
+    </section>
+
+    <section id="tab-standards" class="tab-panel">
+      <div class="card"><div id="standardsNote" class="standards-note"></div><div id="standardsReference"></div></div>
+    </section>
+
+    <section id="tab-results" class="tab-panel">
+      <div class="card">
+        <div class="table-wrap">
+          <table id="historyTable">
+            <thead><tr><th data-field="date">Date</th><th data-field="year">Year</th><th data-field="stroke">Stroke</th><th data-field="distance">Distance</th><th data-field="time">Time</th><th>Standard</th><th data-field="meet">Meet</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <div><label>Rows <select id="pageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label> <span id="pageInfo" class="muted"></span></div>
+          <div><button id="firstPage">First</button><button id="prevPage">Previous</button><button id="nextPage">Next</button><button id="lastPage">Last</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

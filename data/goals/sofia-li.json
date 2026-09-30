@@ -32,6 +32,62 @@
       "label": "Development Goal",
       "course": "SCM",
       "legacyDistance": "25M"
+    },
+    {
+      "stroke": "Freestyle",
+      "distance": 50,
+      "course": "SCY",
+      "legacyDistance": "50Y",
+      "target": 39.79,
+      "targetLevel": "B",
+      "label": "10U Girls 50Y B Standard",
+      "currentPB": null,
+      "sourcePB": {
+        "distance": 25,
+        "course": "SCM",
+        "legacyDistance": "25M",
+        "time": 30.50
+      },
+      "note": "No 50Y PB is recorded yet. The 25M PB is shown only as background and is not directly compared with the 50Y standard."
+    },
+    {
+      "stroke": "Back Stroke",
+      "distance": 50,
+      "course": "SCY",
+      "legacyDistance": "50Y",
+      "target": 48.59,
+      "targetLevel": "B",
+      "label": "10U Girls 50Y B Standard",
+      "currentPB": null,
+      "sourcePB": {
+        "distance": 25,
+        "course": "SCM",
+        "legacyDistance": "25M",
+        "time": 34.13
+      },
+      "note": "No 50Y PB is recorded yet. The 25M PB is shown only as background and is not directly compared with the 50Y standard."
+    },
+    {
+      "stroke": "Breast Stroke",
+      "distance": 50,
+      "course": "SCY",
+      "legacyDistance": "50Y",
+      "target": 54.59,
+      "targetLevel": "B",
+      "label": "10U Girls 50Y B Standard",
+      "currentPB": null,
+      "note": "No 50Y PB is recorded yet. Goal is the first published 10U Girls 50Y motivational standard (B)."
+    },
+    {
+      "stroke": "Butterfly",
+      "distance": 50,
+      "course": "SCY",
+      "legacyDistance": "50Y",
+      "target": 48.39,
+      "targetLevel": "B",
+      "label": "10U Girls 50Y B Standard",
+      "currentPB": null,
+      "note": "No 50Y PB is recorded yet. Goal is the first published 10U Girls 50Y motivational standard (B)."
     }
   ]
 }

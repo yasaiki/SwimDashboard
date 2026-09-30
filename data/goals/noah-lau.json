@@ -2,52 +2,133 @@
   "swimmerId": "noah-lau",
   "goals": [
     {
-      "stroke": "Freestyle",
-      "distance": 50,
-      "target": 35,
-      "label": "Next Goal",
-      "course": "SCM",
-      "legacyDistance": "50M"
-    },
-    {
-      "stroke": "Back Stroke",
-      "distance": 50,
-      "target": 40,
-      "label": "Next Goal",
-      "course": "SCM",
-      "legacyDistance": "50M"
-    },
-    {
-      "stroke": "Breast Stroke",
-      "distance": 50,
-      "target": 40,
-      "label": "Development Goal",
-      "course": "SCM",
-      "legacyDistance": "50M"
-    },
-    {
-      "stroke": "Butterfly",
-      "distance": 25,
-      "target": 16,
-      "label": "Development Goal",
-      "course": "SCM",
-      "legacyDistance": "25M"
-    },
-    {
-      "stroke": "Butterfly",
-      "distance": 50,
-      "target": 33.5,
-      "label": "Next Goal",
-      "course": "SCM",
-      "legacyDistance": "50M"
-    },
-    {
-      "stroke": "Individual Medley",
-      "distance": 100,
-      "target": 80,
-      "label": "Next Goal",
-      "course": "SCM",
-      "legacyDistance": "100M"
-    }
-  ]
+    "secondsToGoal": 2.16,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Breast Stroke",
+    "distance": 50,
+    "target": 43.49,
+    "label": "Reach B",
+    "course": "SCY",
+    "legacyDistance": "50Y",
+    "currentPB": 43.72,
+    "currentLevel": "Below B",
+    "nextLevel": "B",
+    "secondsToGoal": 0.23,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Breast Stroke",
+    "distance": 100,
+    "target": 85.49,
+    "label": "Reach BB",
+    "course": "SCY",
+    "legacyDistance": "100Y",
+    "currentPB": 87.39,
+    "currentLevel": "B",
+    "nextLevel": "BB",
+    "secondsToGoal": 1.9,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Butterfly",
+    "distance": 50,
+    "target": 31.19,
+    "label": "Reach A",
+    "course": "SCY",
+    "legacyDistance": "50Y",
+    "currentPB": 32.09,
+    "currentLevel": "BB",
+    "nextLevel": "A",
+    "secondsToGoal": 0.9,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Butterfly",
+    "distance": 100,
+    "target": 82.89,
+    "label": "Reach B",
+    "course": "SCY",
+    "legacyDistance": "100Y",
+    "currentPB": 89.98,
+    "currentLevel": "Below B",
+    "nextLevel": "B",
+    "secondsToGoal": 7.09,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Freestyle",
+    "distance": 50,
+    "target": 30.49,
+    "label": "Reach BB",
+    "course": "SCY",
+    "legacyDistance": "50Y",
+    "currentPB": 32.73,
+    "currentLevel": "B",
+    "nextLevel": "BB",
+    "secondsToGoal": 2.24,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Freestyle",
+    "distance": 100,
+    "target": 71.49,
+    "label": "Reach B",
+    "course": "SCY",
+    "legacyDistance": "100Y",
+    "currentPB": 75.14,
+    "currentLevel": "Below B",
+    "nextLevel": "B",
+    "secondsToGoal": 3.65,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  },
+  {
+    "stroke": "Individual Medley",
+    "distance": 100,
+    "target": 75.89,
+    "label": "Reach BB",
+    "course": "SCY",
+    "legacyDistance": "100Y",
+    "currentPB": 80.6,
+    "currentLevel": "B",
+    "nextLevel": "BB",
+    "secondsToGoal": 4.71,
+    "standardAgeBracket": "11-12",
+    "standardGender": "M",
+    "standardSource": "USA Swimming 2024-2028 Motivational Standards"
+  }
+],
+"pbEventsWithoutPublishedStandard": [
+  {
+    "stroke": "Back Stroke",
+    "distance": 25,
+    "course": "SCM",
+    "legacyDistance": "25M",
+    "currentPB": 30.44,
+    "reason": "No USA Swimming motivational standard is present for this event in the supplied standards file."
+  },
+  {
+    "stroke": "Butterfly",
+    "distance": 25,
+    "course": "SCM",
+    "legacyDistance": "25M",
+    "currentPB": 18.71,
+    "reason": "No USA Swimming motivational standard is present for this event in the supplied standards file."
+  }
+]
 }
