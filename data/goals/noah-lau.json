@@ -2,6 +2,15 @@
   "swimmerId": "noah-lau",
   "goals": [
     {
+     "stroke": "Back Stroke",
+    "distance": 50,
+    "target": 43.49,
+    "label": "Reach B",
+    "course": "SCY",
+    "legacyDistance": "50Y",
+    "currentPB": 34.85,
+    "currentLevel": "BB",
+    "nextLevel": "A",
     "secondsToGoal": 2.16,
     "standardAgeBracket": "11-12",
     "standardGender": "M",
