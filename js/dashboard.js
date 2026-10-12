@@ -9,8 +9,10 @@ import {
   formatDate,
   formatSwimTime,
   formatTimeOnly,
+  isDQ,
   latestRecord,
   pbMap,
+  courseLabel,
   unique,
 } from "./utils.js";
 import {
@@ -77,7 +79,8 @@ function currentPB(stroke, course, distance, source = records) {
     (r) =>
       r.stroke === stroke &&
       r.course === course &&
-      Number(r.distance) === Number(distance),
+      Number(r.distance) === Number(distance) &&
+      !isDQ(r),
   );
   return rs.length ? Math.min(...rs.map((r) => r.time)) : null;
 }
@@ -144,7 +147,7 @@ function filterSummary() {
   if (f.year !== "All") parts.push(f.year);
   if (f.stroke !== "All")
     parts.push(f.stroke === "Individual Medley" ? "IM" : f.stroke);
-  if (f.course !== "All") parts.push(f.course);
+  if (f.course !== "All") parts.push(courseLabel(f.course));
   if (f.distance !== "All") parts.push(f.distance);
   const count = applyRecordFilters().length;
   $("filterSummary").textContent = parts.length
@@ -178,7 +181,7 @@ function renderMetrics() {
   $("metricResults").textContent = view.length;
   $("metricMeets").textContent = meets.length;
   $("metricLatest").textContent = latest
-    ? `${formatDate(latest.date)} · ${eventLabel(latest)}`
+    ? `${formatDate(latest.date)} · ${eventLabel(latest)}${isDQ(latest) ? " · DQ" : ""}`
     : "—";
 }
 
@@ -320,12 +323,20 @@ function renderHistory() {
   tbody.innerHTML = pageRows.length
     ? pageRows
         .map((r) => {
-          const ev = evaluateStandard(
-            r.time,
-            getStandardTable(r, profile, standards, r.age),
-            standards,
-          );
-          return `<tr><td>${formatDate(r.date)}</td><td>${r.year}</td><td>${escapeHtml(r.stroke)}</td><td>${eventLabel(r)}</td><td>${formatSwimTime(r.time)}</td><td>${badgeHtml(ev)}</td><td>${escapeHtml(r.meet)}</td></tr>`;
+          const dq = isDQ(r);
+          const resultCell = dq
+            ? '<span class="badge status-dq">DQ</span>'
+            : formatSwimTime(r.time);
+          const standardCell = dq
+            ? '<span class="badge status-dq">DQ</span>'
+            : badgeHtml(
+                evaluateStandard(
+                  r.time,
+                  getStandardTable(r, profile, standards, r.age),
+                  standards,
+                ),
+              );
+          return `<tr><td>${formatDate(r.date)}</td><td>${r.year}</td><td>${escapeHtml(r.stroke)}</td><td>${eventLabel(r)}</td><td>${resultCell}</td><td>${standardCell}</td><td>${escapeHtml(r.meet)}</td></tr>`;
         })
         .join("")
     : '<tr><td colspan="7" class="empty">No records match the current view.</td></tr>';

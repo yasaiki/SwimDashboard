@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swim Progress — Admin</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#18324a;background:#f4f8fb}
+*{box-sizing:border-box} body{margin:0}.shell{max-width:1100px;margin:auto;padding:24px}
+.topbar{display:flex;gap:18px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand{font-size:22px;font-weight:800}.card{background:#fff;border:1px solid #dbe6ef;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 16px #17324d0d}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}
+label{font-weight:700;font-size:13px}input,select,button{font:inherit;padding:10px 12px;border:1px solid #b8cad8;border-radius:9px}
+button{cursor:pointer;background:#0867a8;color:#fff;border:0;font-weight:700}.secondary{background:#eaf3f9;color:#174b70}
+.danger{background:#a82d2d}.hide{display:none!important}.notice{padding:12px;border-radius:10px;background:#e9f5ff}.error{background:#fff0f0;color:#8b1d1d}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e4edf4;text-align:left;white-space:normal}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e9f3fa;font-size:12px}.dq{background:#ffe6e6;color:#9a1d1d;font-weight:800}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:#62778a;font-size:13px}
+input[readonly]{background:#f1f5f8;color:#445}
+.editing-banner{background:#fff6e0;border:1px solid #ffe2a3;color:#7a5900;padding:10px 12px;border-radius:9px;margin-bottom:14px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="shell">
+<div class="topbar"><div class="brand">🏊 Swim Progress Admin</div><div><a href="index.html">Swimmers</a> · <a href="dashboard.html">Dashboard</a></div></div>
+
+<div id="loadError" class="card error hide"></div>
+
+<section class="card">
+<h1 style="margin:0 0 8px">Enter Swimmer Result</h1>
+<div class="muted" style="margin-bottom:14px">Course determines the unit system: Meters (SCM) is Summer Swim, Yards (SCY) is PVS. Pick "DQ" instead of a time to record a disqualification.</div>
+<div id="editingBanner" class="editing-banner hide">Editing an existing result. <strong>Update result</strong> will save your changes, or <strong>Cancel edit</strong> to discard them.</div>
+<form id="resultForm">
+<div class="grid">
+<div class="field"><label>Swimmer</label><select id="swimmerId" required><option value="">Loading swimmers…</option></select></div>
+<div class="field"><label>Swimmer Name</label><input id="swimmerName" readonly></div>
+<div class="field"><label>Date</label><input id="date" type="date" required></div>
+<div class="field"><label>Course</label>
+  <select id="course" required>
+    <option value="SCM">Meters (SCM) — Summer Swim</option>
+    <option value="SCY">Yards (SCY) — PVS</option>
+  </select>
+</div>
+<div class="field"><label>Distance</label><input id="distance" type="number" min="25" step="25" required></div>
+<div class="field"><label>Stroke</label><select id="stroke"><option>Freestyle</option><option>Back Stroke</option><option>Breast Stroke</option><option>Butterfly</option><option>Individual Medley</option></select></div>
+<div class="field"><label>Result Status</label><select id="status"><option value="TIME">Time</option><option value="DQ">DQ — Disqualified</option></select></div>
+<div class="field"><label>Time</label><input id="time" placeholder="e.g. 34.13 or 1:05.42"></div>
+<div class="field"><label>Meet</label><input id="meet" required></div>
+<div class="field"><label>Age</label><input id="age" type="number" min="4" max="99"></div>
+</div>
+<div class="actions" style="margin-top:16px">
+  <button type="submit" id="submitBtn">Save result</button>
+  <button type="reset" class="secondary" id="clearBtn">Clear</button>
+  <button type="button" id="cancelEditBtn" class="secondary hide">Cancel edit</button>
+</div>
+<div id="saveMsg" class="notice hide" style="margin-top:12px"></div>
+</form>
+</section>
+
+<section class="card"><div class="topbar"><div><h2 style="margin:0">Manually Entered Results</h2><div class="muted">Stored in this browser and automatically merged into that swimmer's dashboard on this device.</div></div><button id="exportBtn" class="secondary">Export JSON</button></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Swimmer</th><th>Course</th><th>Event</th><th>Result</th><th>Meet</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+</main>
+<script>
+(function () {
+  "use strict";
+
+  // Must match data-service.js's MANUAL_RESULTS_KEY exactly so results
+  // entered here are picked up by the dashboard.
+  var STORAGE_KEY = "swimProgressManualResultsV1";
+
+  function $(id) { return document.getElementById(id); }
+
+  var directory = null;
+  var editingId = null;
+
+  function courseName(course) {
+    return course === "SCY" ? "PVS (Yards)" : "Summer Swim (Meters)";
+  }
+
+  function parseTime(v) {
+    v = (v || "").trim();
+    if (!v) return null;
+    if (v.indexOf(":") !== -1) {
+      var parts = v.split(":");
+      return +(Number(parts[0]) * 60 + Number(parts[1])).toFixed(2);
+    }
+    return +Number(v).toFixed(2);
+  }
+  function fmt(t) {
+    if (t == null) return "DQ";
+    var m = Math.floor(t / 60), s = (t - m * 60).toFixed(2).padStart(5, "0");
+    return m ? m + ":" + s : s;
+  }
+  function getRows() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+    catch (e) { return []; }
+  }
+  function saveRows(v) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+  }
+
+  function showLoadError(msg) {
+    var el = $("loadError");
+    el.textContent = msg;
+    el.classList.remove("hide");
+  }
+
+  function populateSwimmers() {
+    fetch("data/swimmers.json")
+      .then(function (res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function (dir) {
+        directory = dir;
+        var opts = (dir.swimmers || []).map(function (s) {
+          return '<option value="' + s.id + '">' + s.name + "</option>";
+        });
+        $("swimmerId").innerHTML = opts.length
+          ? opts.join("")
+          : '<option value="">No swimmers found in data/swimmers.json</option>';
+        syncSwimmerName();
+      })
+      .catch(function (err) {
+        $("swimmerId").innerHTML = '<option value="">Unable to load swimmer list</option>';
+        showLoadError(
+          "Could not load data/swimmers.json (" + err.message + "). " +
+          "Make sure you're opening this page through a local web server " +
+          "(e.g. http://localhost:8000/admin.html) and not by double-clicking " +
+          "the file directly — browsers block JSON loading from file:// pages."
+        );
+      });
+  }
+  function syncSwimmerName() {
+    var entry = null;
+    if (directory) {
+      for (var i = 0; i < directory.swimmers.length; i++) {
+        if (directory.swimmers[i].id === $("swimmerId").value) { entry = directory.swimmers[i]; break; }
+      }
+    }
+    $("swimmerName").value = entry ? entry.name : "";
+  }
+  $("swimmerId").addEventListener("change", syncSwimmerName);
+  populateSwimmers();
+
+  $("status").addEventListener("change", function () {
+    var dq = $("status").value === "DQ";
+    $("time").disabled = dq;
+    $("time").required = !dq;
+    if (dq) $("time").value = "";
+  });
+
+  function enterEditMode(r) {
+    editingId = r.id;
+    $("swimmerId").value = r.swimmerId;
+    syncSwimmerName();
+    $("date").value = r.date;
+    $("course").value = r.course;
+    $("distance").value = r.distance;
+    $("stroke").value = r.stroke;
+    $("status").value = r.status;
+    $("status").dispatchEvent(new Event("change"));
+    if (r.status !== "DQ") $("time").value = fmt(r.time);
+    $("meet").value = r.meet;
+    $("age").value = r.age != null ? r.age : "";
+    $("submitBtn").textContent = "Update result";
+    $("cancelEditBtn").classList.remove("hide");
+    $("editingBanner").classList.remove("hide");
+    $("saveMsg").classList.add("hide");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function exitEditMode() {
+    editingId = null;
+    $("resultForm").reset();
+    $("course").value = "SCM";
+    syncSwimmerName();
+    $("status").dispatchEvent(new Event("change"));
+    $("submitBtn").textContent = "Save result";
+    $("cancelEditBtn").classList.add("hide");
+    $("editingBanner").classList.add("hide");
+  }
+  $("cancelEditBtn").addEventListener("click", exitEditMode);
+
+  $("resultForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!$("swimmerId").value) { alert("Select a swimmer."); return; }
+    var status = $("status").value;
+    var time = status === "DQ" ? null : parseTime($("time").value);
+    if (status === "TIME" && (!isFinite(time) || time <= 0)) {
+      alert("Enter a valid swim time.");
+      return;
+    }
+    var data = {
+      swimmerId: $("swimmerId").value,
+      swimmerName: $("swimmerName").value,
+      date: $("date").value,
+      year: +$("date").value.slice(0, 4),
+      course: $("course").value,
+      distance: +$("distance").value,
+      stroke: $("stroke").value,
+      status: status,
+      time: time,
+      meet: $("meet").value.trim(),
+      age: $("age").value ? +$("age").value : null,
+      source: "admin"
+    };
+    var all = getRows();
+    if (editingId) {
+      var idx = -1;
+      for (var i = 0; i < all.length; i++) { if (all[i].id === editingId) { idx = i; break; } }
+      if (idx !== -1) {
+        data.id = editingId;
+        all[idx] = data;
+      }
+      saveRows(all);
+      $("saveMsg").textContent = "Result updated.";
+    } else {
+      data.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+      all.push(data);
+      saveRows(all);
+      $("saveMsg").textContent = "Result saved.";
+    }
+    $("saveMsg").classList.remove("hide");
+    exitEditMode();
+    render();
+  });
+
+  function render() {
+    var all = getRows().sort(function (x, y) { return y.date.localeCompare(x.date); });
+    $("rows").innerHTML = all.length
+      ? all.map(function (r) {
+          var resultHtml = r.status === "DQ"
+            ? '<span class="badge dq">DQ</span>'
+            : fmt(r.time);
+          return "<tr><td>" + r.date + "</td><td>" + r.swimmerName + "</td>" +
+            "<td><span class=\"badge\">" + courseName(r.course) + "</span></td>" +
+            "<td>" + r.distance + " " + r.stroke + "</td>" +
+            "<td>" + resultHtml + "</td><td>" + r.meet + "</td>" +
+            "<td class=\"actions\">" +
+            "<button class=\"secondary\" data-edit=\"" + r.id + "\">Edit</button>" +
+            "<button class=\"danger\" data-del=\"" + r.id + "\">Delete</button>" +
+            "</td></tr>";
+        }).join("")
+      : '<tr><td colspan="7" class="muted">No manual results yet.</td></tr>';
+  }
+
+  $("rows").addEventListener("click", function (e) {
+    var editId = e.target.getAttribute("data-edit");
+    var delId = e.target.getAttribute("data-del");
+    if (editId) {
+      var all = getRows();
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].id === editId) { enterEditMode(all[i]); break; }
+      }
+    } else if (delId) {
+      if (confirm("Delete this result?")) {
+        saveRows(getRows().filter(function (r) { return r.id !== delId; }));
+        if (editingId === delId) exitEditMode();
+        render();
+      }
+    }
+  });
+
+  $("exportBtn").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(getRows(), null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "swim-manual-results.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  render();
+})();
+</script>
+</body></html>

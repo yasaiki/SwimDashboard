@@ -53,9 +53,32 @@ export function currentAge(profile) {
   }
   return profile.currentAge ?? null;
 }
+
+// A record is a DQ if it's explicitly flagged, or if it simply has no time.
+export function isDQ(r) {
+  return r.status === "DQ" || r.time == null;
+}
+
+// Friendly display for a result cell: "DQ" or the formatted swim time.
+export function resultDisplay(r) {
+  return isDQ(r) ? "DQ" : formatSwimTime(r.time);
+}
+
+// Summer Swim <-> SCM (meters), PVS <-> SCY (yards). Used for filter labels.
+export function courseLabel(course) {
+  if (course === "SCM") return "Summer Swim (Meters)";
+  if (course === "SCY") return "PVS (Yards)";
+  return course || "—";
+}
+
 export function compareRows(a, b, field) {
   if (field === "date") return new Date(a.date) - new Date(b.date);
-  if (field === "year" || field === "time" || field === "distance")
+  if (field === "time") {
+    const at = a.time == null ? Infinity : a.time;
+    const bt = b.time == null ? Infinity : b.time;
+    return at - bt;
+  }
+  if (field === "year" || field === "distance")
     return Number(a[field]) - Number(b[field]);
   return String(a[field] ?? "").localeCompare(
     String(b[field] ?? ""),
@@ -75,6 +98,7 @@ export function latestRecord(records) {
 export function pbMap(records) {
   const m = new Map();
   for (const r of records) {
+    if (isDQ(r)) continue;
     const k = eventKey(r);
     if (!m.has(k) || r.time < m.get(k).time) m.set(k, r);
   }
@@ -87,7 +111,8 @@ export function firstRecord(records, stroke, course, distance) {
         (r) =>
           r.stroke === stroke &&
           r.course === course &&
-          Number(r.distance) === Number(distance),
+          Number(r.distance) === Number(distance) &&
+          !isDQ(r),
       )
       .sort((a, b) => new Date(a.date) - new Date(b.date))[0] || null
   );

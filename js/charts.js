@@ -5,6 +5,7 @@ import {
   formatDate,
   formatSwimTime,
   formatTimeOnly,
+  isDQ,
 } from "./utils.js";
 
 const palette = [
@@ -67,8 +68,9 @@ function chronologicalScale(title) {
 }
 
 export function renderProgressChart(records) {
+  const timed = records.filter((r) => !isDQ(r));
   const groups = new Map();
-  for (const r of records) {
+  for (const r of timed) {
     const k = eventKey(r);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
@@ -134,8 +136,9 @@ export function renderProgressChart(records) {
 }
 
 export function renderPBProgress(records) {
+  const timed = records.filter((r) => !isDQ(r));
   const groups = new Map();
-  for (const r of records) {
+  for (const r of timed) {
     const k = eventKey(r);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
@@ -204,7 +207,7 @@ export function renderPBProgress(records) {
 
 function strokeImprovement(records, stroke) {
   const groups = new Map();
-  for (const r of records.filter((x) => x.stroke === stroke)) {
+  for (const r of records.filter((x) => x.stroke === stroke && !isDQ(x))) {
     const k = eventKey(r);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);

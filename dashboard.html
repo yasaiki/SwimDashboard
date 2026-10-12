@@ -11,7 +11,7 @@
     <main class="shell">
       <div class="topbar">
         <a class="back-link" href="index.html">← All Swimmers</a>
-        <div class="brand">🏊 Swim Progress</div>
+        <div class="brand">🏊 Swim Progress</div><a class="back-link" href="admin.html">Admin</a>
       </div>
       <div id="loading" class="status">Loading swimmer dashboard…</div>
       <div id="error" class="status error hide"></div>
@@ -58,7 +58,16 @@
               Reset filters
             </button>
           </div>
+        
           <div class="filters global-filters">
+               <div class="field">
+              <label for="course">Course</label>
+              <select id="course">
+                <option value="All">All courses</option>
+                <option value="SCM">Meters (Summer Swim)</option>
+                <option value="SCY">Yards (PVS)</option>
+              </select>
+            </div>
             <div class="field">
               <label for="year">Year</label
               ><select id="year"></select>
@@ -74,14 +83,7 @@
                 <option>Individual Medley</option>
               </select>
             </div>
-            <div class="field">
-              <label for="course">Course</label
-              ><select id="course">
-                <option value="All">All courses</option>
-                <option value="SCM">Meters (SCM)</option>
-                <option value="SCY">Yards (SCY)</option>
-              </select>
-            </div>
+           
             <div class="field">
               <label for="distance">Distance</label
               ><select id="distance"></select>
@@ -161,7 +163,7 @@
                     <th data-field="year">Year</th>
                     <th data-field="stroke">Stroke</th>
                     <th data-field="distance">Distance</th>
-                    <th data-field="time">Time</th>
+                    <th data-field="time">Result</th>
                     <th>Standard</th>
                     <th data-field="meet">Meet</th>
                   </tr>
