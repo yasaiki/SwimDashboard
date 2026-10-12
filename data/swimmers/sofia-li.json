@@ -13,6 +13,45 @@
     "sourcePdf": "Swimmer Stats – Sofia.pdf"
   },
   "records": [
+      {
+      "date": "2026-10-11",
+      "year": 2026,
+      "stroke": "Back Stroke",
+      "distance": 25,
+      "time": 28.30,
+      "meet": "RMSC Eat N Meet",
+      "age": 7,
+      "id": "swim_d3461e31004f",
+      "meetId": "2026-10-11-Eat-N-Meet",
+      "course": "SCY",
+      "legacyDistance": "25Y"
+    },
+       {
+      "date": "2026-10-11",
+      "year": 2026,
+      "stroke": "Breast Stroke",
+      "distance": 25,
+      "time": 0.0,
+      "meet": "RMSC Eat N Meet",
+      "age": 7,
+      "id": "swim_d3461e31004f",
+      "meetId": "2026-10-11-Eat-N-Meet",
+      "course": "SCY",
+      "legacyDistance": "25Y"
+    },
+           {
+      "date": "2026-10-11",
+      "year": 2026,
+      "stroke": "Freestyle",
+      "distance": 50,
+      "time": 62.50,
+      "meet": "RMSC Eat N Meet",
+      "age": 7,
+      "id": "swim_d3461e31004f",
+      "meetId": "2026-10-11-Eat-N-Meet",
+      "course": "SCY",
+      "legacyDistance": "50Y"
+    },
     {
       "date": "2026-06-13",
       "year": 2026,
