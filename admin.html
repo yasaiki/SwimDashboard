@@ -47,6 +47,10 @@ input[readonly]{background:#f1f5f8;color:#445}
 <div class="field"><label>Meet</label><input id="meet" required></div>
 <div class="field"><label>Age</label><input id="age" type="number" min="4" max="99"></div>
 </div>
+<div class="field" style="margin-top:14px">
+  <label>Notes <span class="muted" style="font-weight:400">(optional — not shown in charts/standards, just a reference note)</span></label>
+  <textarea id="notes" rows="2" placeholder="e.g. Great back-half split, worked on streamline off the wall..." style="font:inherit;padding:10px 12px;border:1px solid #b8cad8;border-radius:9px;resize:vertical"></textarea>
+</div>
 <div class="actions" style="margin-top:16px">
   <button type="submit" id="submitBtn">Save result</button>
   <button type="reset" class="secondary" id="clearBtn">Clear</button>
@@ -56,8 +60,8 @@ input[readonly]{background:#f1f5f8;color:#445}
 </form>
 </section>
 
-<section class="card"><div class="topbar"><div><h2 style="margin:0">Manually Entered Results</h2><div class="muted">Stored in this browser and automatically merged into that swimmer's dashboard on this device.</div></div><button id="exportBtn" class="secondary">Export JSON</button></div>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Swimmer</th><th>Course</th><th>Event</th><th>Result</th><th>Meet</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<section class="card"><div class="topbar"><div><h2 style="margin:0">Existing Entered Results</h2><div class="muted">Stored in this browser and automatically merged into that swimmer's dashboard on this device. Click Edit to correct a result, or Delete to remove it (with confirmation).</div></div><button id="exportBtn" class="secondary">Export JSON</button></div>
+<div class="table-wrap"><table><thead><tr><th>Date</th><th>Swimmer</th><th>Course</th><th>Event</th><th>Result</th><th>Meet</th><th>Notes</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 </main>
 <script>
