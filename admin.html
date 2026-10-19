@@ -80,6 +80,15 @@ input[readonly]{background:#f1f5f8;color:#445}
   function courseName(course) {
     return course === "SCY" ? "PVS (Yards)" : "Summer Swim (Meters)";
   }
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>'"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c];
+    });
+  }
+  function truncate(s, n) {
+    s = String(s || "");
+    return s.length > n ? s.slice(0, n - 1) + "…" : s;
+  }
 
   function parseTime(v) {
     v = (v || "").trim();
@@ -167,6 +176,7 @@ input[readonly]{background:#f1f5f8;color:#445}
     if (r.status !== "DQ") $("time").value = fmt(r.time);
     $("meet").value = r.meet;
     $("age").value = r.age != null ? r.age : "";
+    $("notes").value = r.notes || "";
     $("submitBtn").textContent = "Update result";
     $("cancelEditBtn").classList.remove("hide");
     $("editingBanner").classList.remove("hide");
@@ -177,6 +187,7 @@ input[readonly]{background:#f1f5f8;color:#445}
     editingId = null;
     $("resultForm").reset();
     $("course").value = "SCM";
+    $("notes").value = "";
     syncSwimmerName();
     $("status").dispatchEvent(new Event("change"));
     $("submitBtn").textContent = "Save result";
@@ -206,6 +217,7 @@ input[readonly]{background:#f1f5f8;color:#445}
       time: time,
       meet: $("meet").value.trim(),
       age: $("age").value ? +$("age").value : null,
+      notes: $("notes").value.trim(),
       source: "admin"
     };
     var all = getRows();
@@ -236,16 +248,20 @@ input[readonly]{background:#f1f5f8;color:#445}
           var resultHtml = r.status === "DQ"
             ? '<span class="badge dq">DQ</span>'
             : fmt(r.time);
-          return "<tr><td>" + r.date + "</td><td>" + r.swimmerName + "</td>" +
-            "<td><span class=\"badge\">" + courseName(r.course) + "</span></td>" +
-            "<td>" + r.distance + " " + r.stroke + "</td>" +
-            "<td>" + resultHtml + "</td><td>" + r.meet + "</td>" +
+          var notesHtml = r.notes
+            ? '<span title="' + escapeHtml(r.notes) + '">' + escapeHtml(truncate(r.notes, 28)) + "</span>"
+            : '<span class="muted">—</span>';
+          return "<tr><td>" + escapeHtml(r.date) + "</td><td>" + escapeHtml(r.swimmerName) + "</td>" +
+            "<td><span class=\"badge\">" + escapeHtml(courseName(r.course)) + "</span></td>" +
+            "<td>" + escapeHtml(r.distance) + " " + escapeHtml(r.stroke) + "</td>" +
+            "<td>" + resultHtml + "</td><td>" + escapeHtml(r.meet) + "</td>" +
+            "<td>" + notesHtml + "</td>" +
             "<td class=\"actions\">" +
             "<button class=\"secondary\" data-edit=\"" + r.id + "\">Edit</button>" +
             "<button class=\"danger\" data-del=\"" + r.id + "\">Delete</button>" +
             "</td></tr>";
         }).join("")
-      : '<tr><td colspan="7" class="muted">No manual results yet.</td></tr>';
+      : '<tr><td colspan="8" class="muted">No results entered yet.</td></tr>';
   }
 
   $("rows").addEventListener("click", function (e) {
