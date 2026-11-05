@@ -1,4 +1,4 @@
-import { currentAge, standardDistanceKey } from "./utils.js";
+import { currentAge, standardDistanceKey } from "./utils.js?v=saved-file-refresh-v1";
 export function getAgeBracket(age, standards) {
   return (
     (standards.ageBrackets || []).find(

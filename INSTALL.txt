@@ -1,0 +1,70 @@
+SWIM PROGRESS ADMIN UPDATE
+
+Replace these files in your existing project:
+  admin.html
+  js/data-service.js
+
+The admin page now loads independently of js/data-service.js, so an older or
+cached dashboard service cannot prevent its swimmer list from loading.
+
+Keep all existing data, dashboard, and other project files. Start your usual
+local HTTP server and reload the admin page. If an older script stays cached,
+use Ctrl+F5 to refresh.
+
+WORKFLOW
+1. Select a swimmer. The table loads their existing JSON records, plus any
+   older manual entries saved in this browser that are not already in the file.
+2. Search, filter by course, sort columns, or change the page size.
+3. Add a result, or use Edit / Delete on a table row. Update result saves an
+   edit; Cancel edit discards the form changes. Deletes require confirmation.
+4. Click Export swimmer JSON to download the complete swimmer document under
+   its original filename (for example, sofia-li.json). Or click Copy JSON to
+   copy its entire contents, with a selectable-text fallback if clipboard access
+   is unavailable.
+5. Replace the exact project file shown on the admin page, usually
+   data/swimmers/<swimmer-id>.json. If pasting, replace the ENTIRE file contents.
+   Export includes the profile, schema version, any other document fields, and
+   ALL current records, even when the table is filtered or paginated.
+6. After replacing the file, use Discard browser edits / reload file to load
+   the current file and clear that swimmer's browser draft. Only do this once
+   the project file contains the changes you want to keep.
+
+Changes are saved in this browser and appear on this device's dashboard through
+js/data-service.js. Export does not automatically write to your project folder.
+Browser drafts remain until discarded; downloading alone does not clear them.
+Each export covers one swimmer. Export each changed swimmer separately.
+
+Existing profile fields and extra record fields are preserved. Repeated IDs in
+older data do not make Edit or Delete affect the wrong row. Legacy DQ text is
+recognized in the admin table; editing a DQ writes status DQ and time null.
+
+If a source file changes independently while an older browser draft remains,
+admin blocks export until the draft is discarded/reloaded, protecting the newer
+source file from accidental replacement.
+
+VALIDATION
+Automated JavaScript checks passed for loading, manual-entry migration and
+deduplication, exact-row editing/deletion with repeated IDs, DQ handling,
+metadata/profile preservation, time validation, escaping, complete exports,
+clipboard fallback, persistence, swimmer isolation, storage failures, replaced
+source reconciliation, source conflicts, and discard/reload.
+A live browser rendering check was unavailable in this environment.
+
+LOADING TROUBLESHOOTING
+- Open http://localhost:8000/admin.html after starting serve.bat from the
+  PROJECT folder. Double-clicking admin.html directly cannot load JSON files.
+- Keep admin.html in the same project root as index.html and the data folder.
+- The required directory is data/swimmers.json; each entry must have id and
+  dataFile, for example data/swimmers/sofia-li.json. Do not leave uploaded
+  suffixes such as swimmers(1).json in these project paths.
+- Use Reload swimmers and data to retry failed requests without clearing your
+  saved browser edits. Discard browser edits / reload file is a separate action
+  that intentionally clears the selected swimmer's saved draft.
+- Errors now identify HTTP failures, invalid JSON, and loading timeouts.
+- If browser storage is blocked or malformed, source records still display,
+  with a warning. Editing/export are disabled until saved changes can be read,
+  protecting drafts against accidental loss. Nothing is automatically erased.
+
+Additional automated regression checks passed for missing or old service-module
+independence, HTTP failures, invalid JSON, retry recovery, switching swimmers
+after failed requests, corrupt/blocked storage, and local-file guidance.

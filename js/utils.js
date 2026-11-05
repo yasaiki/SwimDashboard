@@ -56,7 +56,7 @@ export function currentAge(profile) {
 
 // A record is a DQ if it's explicitly flagged, or if it simply has no time.
 export function isDQ(r) {
-  return r.status === "DQ" || r.time == null;
+  return r.status === "DQ" || r.time == null || String(r.time).trim().toUpperCase() === "DQ";
 }
 
 // Friendly display for a result cell: "DQ" or the formatted swim time.
@@ -74,9 +74,9 @@ export function courseLabel(course) {
 export function compareRows(a, b, field) {
   if (field === "date") return new Date(a.date) - new Date(b.date);
   if (field === "time") {
-    const at = a.time == null ? Infinity : a.time;
-    const bt = b.time == null ? Infinity : b.time;
-    return at - bt;
+    const at = isDQ(a) ? Infinity : Number(a.time);
+    const bt = isDQ(b) ? Infinity : Number(b.time);
+    return at === bt ? 0 : at < bt ? -1 : 1;
   }
   if (field === "year" || field === "distance")
     return Number(a[field]) - Number(b[field]);

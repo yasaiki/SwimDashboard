@@ -6,7 +6,7 @@ import {
   formatSwimTime,
   formatTimeOnly,
   isDQ,
-} from "./utils.js";
+} from "./utils.js?v=saved-file-refresh-v1";
 
 const palette = [
   "#1565C0",

@@ -16,6 +16,11 @@
       <div id="loading" class="status">Loading swimmer dashboard…</div>
       <div id="error" class="status error hide"></div>
 
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div><div id="dataStatus" class="muted" role="status" aria-live="polite">Checking saved swimmer data…</div>
+        <div class="note">Updates automatically every 30 seconds and when you return to this tab. Saved JSON files supply the dashboard; pending admin edits stay in Admin until exported and saved.</div></div>
+        <button id="refreshData" type="button" class="secondary-button">Refresh data</button>
+      </div>
       <div id="app" class="hide">
         <section class="card hero">
           <div>
@@ -195,6 +200,6 @@
         </section>
       </div>
     </main>
-    <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="js/dashboard.js?v=saved-file-refresh-v1"></script>
   </body>
 </html>

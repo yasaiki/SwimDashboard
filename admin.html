@@ -23,11 +23,13 @@ input[readonly]{background:#f1f5f8;color:#445}
 <body><main class="shell">
 <div class="topbar"><div class="brand">🏊 Swim Progress Admin</div><div><a href="index.html">Swimmers</a> · <a href="dashboard.html">Dashboard</a></div></div>
 
+<noscript><div class="card error">JavaScript must be enabled to load swimmers and records.</div></noscript>
+<div class="actions"><button id="retryLoadBtn" type="button" class="secondary">Reload swimmers and data</button></div>
 <div id="loadError" class="card error hide"></div>
 
 <section class="card">
 <h1 style="margin:0 0 8px">Enter Swimmer Result</h1>
-<div class="muted" style="margin-bottom:14px">Course determines the unit system: Meters (SCM) is Summer Swim, Yards (SCY) is PVS. Pick "DQ" instead of a time to record a disqualification.</div>
+<div class="muted" style="margin-bottom:14px">Choose the course used for this result. Pick "DQ" instead of a time to record a disqualification.</div>
 <div id="editingBanner" class="editing-banner hide">Editing an existing result. <strong>Update result</strong> will save your changes, or <strong>Cancel edit</strong> to discard them.</div>
 <form id="resultForm">
 <div class="grid">
@@ -38,6 +40,7 @@ input[readonly]{background:#f1f5f8;color:#445}
   <select id="course" required>
     <option value="SCM">Meters (SCM) — Summer Swim</option>
     <option value="SCY">Yards (SCY) — PVS</option>
+    <option value="LCM">Meters (LCM) — Long Course</option>
   </select>
 </div>
 <div class="field"><label>Distance</label><input id="distance" type="number" min="25" step="25" required></div>
@@ -48,7 +51,7 @@ input[readonly]{background:#f1f5f8;color:#445}
 <div class="field"><label>Age</label><input id="age" type="number" min="4" max="99"></div>
 </div>
 <div class="field" style="margin-top:14px">
-  <label>Notes <span class="muted" style="font-weight:400">(optional — not shown in charts/standards, just a reference note)</span></label>
+  <label>Notes <span class="muted" style="font-weight:400">(browser draft only — omitted from Copy JSON and Export)</span></label>
   <textarea id="notes" rows="2" placeholder="e.g. Great back-half split, worked on streamline off the wall..." style="font:inherit;padding:10px 12px;border:1px solid #b8cad8;border-radius:9px;resize:vertical"></textarea>
 </div>
 <div class="actions" style="margin-top:16px">
@@ -60,237 +63,383 @@ input[readonly]{background:#f1f5f8;color:#445}
 </form>
 </section>
 
-<section class="card"><div class="topbar"><div><h2 style="margin:0">Existing Entered Results</h2><div class="muted">Stored in this browser and automatically merged into that swimmer's dashboard on this device. Click Edit to correct a result, or Delete to remove it (with confirmation).</div></div><button id="exportBtn" class="secondary">Export JSON</button></div>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Swimmer</th><th>Course</th><th>Event</th><th>Result</th><th>Meet</th><th>Notes</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<section class="card">
+<div class="topbar"><div><h2 style="margin:0">Swimmer Records</h2>
+<p class="muted">All records for the selected swimmer, including saved browser edits. Export includes the complete profile and records, ready to replace the data file.</p></div></div>
+<p id="filePath" class="notice" role="status">Loading…</p>
+<div class="actions">
+<button id="exportBtn" type="button">Export swimmer JSON</button>
+<button id="copyBtn" type="button" class="secondary">Copy JSON</button>
+<button id="reloadBtn" type="button" class="secondary">Discard browser edits / reload file</button>
+</div>
+<p class="muted">Export and Copy include every record, regardless of table filters, using date, year, stroke, distance, time, meet, age, id, meetId, course, and legacyDistance. Notes, status, and source are omitted; disqualifications use &quot;time&quot;: &quot;DQ&quot;. Replace the indicated file in your project to publish corrections. The dashboard updates after you replace the saved JSON file.</p>
+<div id="copyFallback" class="hide"><label for="jsonPreview">Copy the entire swimmer document below</label><textarea id="jsonPreview" readonly rows="10" style="width:100%"></textarea></div>
+<div class="actions" style="margin:18px 0;align-items:end">
+<div class="field"><label for="search">Search records</label><input id="search" type="search" placeholder="Date, event, meet, notes…"></div>
+<div class="field"><label for="courseFilter">Course filter</label><select id="courseFilter"><option value="">All courses</option><option>SCM</option><option>SCY</option><option>LCM</option></select></div>
+<div class="field"><label for="pageSize">Rows per page</label><select id="pageSize"><option>10</option><option>25</option><option>50</option><option value="all">All</option></select></div>
+</div>
+<div class="table-wrap"><table aria-label="Swimmer records"><thead><tr>
+<th scope="col" aria-sort="descending"><button class="secondary" data-sort="date">Date ↕</button></th>
+<th scope="col"><button class="secondary" data-sort="course">Course ↕</button></th>
+<th scope="col"><button class="secondary" data-sort="distance">Distance ↕</button></th>
+<th scope="col"><button class="secondary" data-sort="stroke">Stroke ↕</button></th>
+<th scope="col"><button class="secondary" data-sort="time">Result ↕</button></th>
+<th scope="col"><button class="secondary" data-sort="meet">Meet ↕</button></th>
+<th scope="col">Age</th><th scope="col">Notes</th><th scope="col">Actions</th>
+</tr></thead><tbody id="rows"></tbody></table></div>
+<div class="actions" style="margin-top:14px;align-items:center"><button id="previousBtn" type="button" class="secondary">Previous</button><span id="pageInfo" role="status"></span><button id="nextBtn" type="button" class="secondary">Next</button></div>
 </section>
 </main>
+<style>button:disabled{opacity:.5;cursor:not-allowed}th button{padding:6px}textarea{font:inherit}td:last-child{min-width:150px} .topbar{flex-wrap:wrap}</style>
 <script>
-(function () {
-  "use strict";
+(async function () {
+"use strict";
+const MANUAL_RESULTS_KEY = "swimProgressManualResultsV1";
 
-  // Must match data-service.js's MANUAL_RESULTS_KEY exactly so results
-  // entered here are picked up by the dashboard.
-  var STORAGE_KEY = "swimProgressManualResultsV1";
+const jsonCache = new Map();
+async function requestJson(path) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(path, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error(`Unable to load ${path} (HTTP ${response.status}). Check that this file exists under the server's project folder.`);
+    try { return await response.json(); }
+    catch { throw new Error(`${path} is not valid JSON. Check the file for missing commas or an HTML error page returned by the server.`); }
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error(`Loading ${path} timed out. Check that your local web server is running, then retry.`);
+    throw error;
+  } finally { clearTimeout(timeout); }
+}
+async function getJson(path) {
+  if (jsonCache.has(path)) return jsonCache.get(path);
+  const pending = requestJson(path).catch((error) => { jsonCache.delete(path); throw error; });
+  jsonCache.set(path, pending);
+  return pending;
+}
+async function loadDirectory() {
+  const directory = await getJson("data/swimmers.json");
+  if (!directory || !Array.isArray(directory.swimmers)) throw new Error("data/swimmers.json must contain a swimmers array.");
+  for (const entry of directory.swimmers) {
+    if (!entry || typeof entry.id !== "string" || !entry.id || typeof entry.dataFile !== "string" || !entry.dataFile.trim())
+      throw new Error("Every swimmer in data/swimmers.json needs an id and a dataFile path.");
+  }
+  return directory;
+}
+const loadAppConfig = () => getJson("data/app-config.json");
 
-  function $(id) { return document.getElementById(id); }
-
-  var directory = null;
-  var editingId = null;
-
-  function courseName(course) {
-    return course === "SCY" ? "PVS (Yards)" : "Summer Swim (Meters)";
-  }
-  function escapeHtml(s) {
-    return String(s == null ? "" : s).replace(/[&<>'"]/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c];
-    });
-  }
-  function truncate(s, n) {
-    s = String(s || "");
-    return s.length > n ? s.slice(0, n - 1) + "…" : s;
-  }
-
-  function parseTime(v) {
-    v = (v || "").trim();
-    if (!v) return null;
-    if (v.indexOf(":") !== -1) {
-      var parts = v.split(":");
-      return +(Number(parts[0]) * 60 + Number(parts[1])).toFixed(2);
-    }
-    return +Number(v).toFixed(2);
-  }
-  function fmt(t) {
-    if (t == null) return "DQ";
-    var m = Math.floor(t / 60), s = (t - m * 60).toFixed(2).padStart(5, "0");
-    return m ? m + ":" + s : s;
-  }
-  function getRows() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
-    catch (e) { return []; }
-  }
-  function saveRows(v) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-  }
-
-  function showLoadError(msg) {
-    var el = $("loadError");
-    el.textContent = msg;
-    el.classList.remove("hide");
-  }
-
-  function populateSwimmers() {
-    fetch("data/swimmers.json")
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (dir) {
-        directory = dir;
-        var opts = (dir.swimmers || []).map(function (s) {
-          return '<option value="' + s.id + '">' + s.name + "</option>";
-        });
-        $("swimmerId").innerHTML = opts.length
-          ? opts.join("")
-          : '<option value="">No swimmers found in data/swimmers.json</option>';
-        syncSwimmerName();
-      })
-      .catch(function (err) {
-        $("swimmerId").innerHTML = '<option value="">Unable to load swimmer list</option>';
-        showLoadError(
-          "Could not load data/swimmers.json (" + err.message + "). " +
-          "Make sure you're opening this page through a local web server " +
-          "(e.g. http://localhost:8000/admin.html) and not by double-clicking " +
-          "the file directly — browsers block JSON loading from file:// pages."
-        );
-      });
-  }
-  function syncSwimmerName() {
-    var entry = null;
-    if (directory) {
-      for (var i = 0; i < directory.swimmers.length; i++) {
-        if (directory.swimmers[i].id === $("swimmerId").value) { entry = directory.swimmers[i]; break; }
-      }
-    }
-    $("swimmerName").value = entry ? entry.name : "";
-  }
-  $("swimmerId").addEventListener("change", syncSwimmerName);
-  populateSwimmers();
-
-  $("status").addEventListener("change", function () {
-    var dq = $("status").value === "DQ";
-    $("time").disabled = dq;
-    $("time").required = !dq;
-    if (dq) $("time").value = "";
-  });
-
-  function enterEditMode(r) {
-    editingId = r.id;
-    $("swimmerId").value = r.swimmerId;
-    syncSwimmerName();
-    $("date").value = r.date;
-    $("course").value = r.course;
-    $("distance").value = r.distance;
-    $("stroke").value = r.stroke;
-    $("status").value = r.status;
-    $("status").dispatchEvent(new Event("change"));
-    if (r.status !== "DQ") $("time").value = fmt(r.time);
-    $("meet").value = r.meet;
-    $("age").value = r.age != null ? r.age : "";
-    $("notes").value = r.notes || "";
-    $("submitBtn").textContent = "Update result";
-    $("cancelEditBtn").classList.remove("hide");
-    $("editingBanner").classList.remove("hide");
-    $("saveMsg").classList.add("hide");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-  function exitEditMode() {
-    editingId = null;
-    $("resultForm").reset();
-    $("course").value = "SCM";
-    $("notes").value = "";
-    syncSwimmerName();
-    $("status").dispatchEvent(new Event("change"));
-    $("submitBtn").textContent = "Save result";
-    $("cancelEditBtn").classList.add("hide");
-    $("editingBanner").classList.add("hide");
-  }
-  $("cancelEditBtn").addEventListener("click", exitEditMode);
-
-  $("resultForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (!$("swimmerId").value) { alert("Select a swimmer."); return; }
-    var status = $("status").value;
-    var time = status === "DQ" ? null : parseTime($("time").value);
-    if (status === "TIME" && (!isFinite(time) || time <= 0)) {
-      alert("Enter a valid swim time.");
-      return;
-    }
-    var data = {
-      swimmerId: $("swimmerId").value,
-      swimmerName: $("swimmerName").value,
-      date: $("date").value,
-      year: +$("date").value.slice(0, 4),
-      course: $("course").value,
-      distance: +$("distance").value,
-      stroke: $("stroke").value,
-      status: status,
-      time: time,
-      meet: $("meet").value.trim(),
-      age: $("age").value ? +$("age").value : null,
-      notes: $("notes").value.trim(),
-      source: "admin"
+// Admin drafts are changed here; the dashboard uses the saved project file.
+// Export and replace that file to publish corrections.
+const ADMIN_DRAFTS_KEY = "swimProgressAdminDocumentsV2";
+const clone = (value) => JSON.parse(JSON.stringify(value));
+function stored(key, fallback) {
+  const raw = localStorage.getItem(key);
+  const value = raw ? JSON.parse(raw) : fallback;
+  if (key === MANUAL_RESULTS_KEY && (!Array.isArray(value) || value.some((row) => !row || typeof row !== "object")))
+    throw new Error("Invalid saved manual results");
+  if (key === ADMIN_DRAFTS_KEY && (!value || typeof value !== "object" || Array.isArray(value)))
+    throw new Error("Invalid saved admin drafts");
+  return value;
+}
+function signature(r) {
+  return JSON.stringify([r.date, r.course, Number(r.distance), r.stroke,
+    r.status === "DQ" || r.time == null || r.time === "DQ" ? "DQ" : Number(r.time), r.meet]);
+}
+async function loadSwimmerSource(id, fresh = false) {
+  const directory = await loadDirectory();
+  const entry = directory.swimmers.find((s) => s.id === id);
+  if (!entry) throw new Error(`Unknown swimmer: ${id}`);
+  const path = entry.dataFile.replace(/\\/g, "/");
+  const doc = await (fresh ? requestJson(path) : getJson(path));
+  if (!doc.profile || !Array.isArray(doc.records)) throw new Error("Invalid swimmer document");
+  return { entry, doc: clone(doc) };
+}
+// The on-disk schema uses a numeric time or the literal "DQ", not status.
+// Export deliberately selects only the fields in that schema, in its order.
+function exportSwimmerDocument(document) {
+  return { ...clone(document), records: document.records.map((record, index) => {
+    const isDQ = record.status === "DQ" || record.time == null || String(record.time).trim().toUpperCase() === "DQ";
+    const time = isDQ ? "DQ" : Number(record.time);
+    const distance = Number(record.distance);
+    if ((!isDQ && (!Number.isFinite(time) || time <= 0)) || !Number.isFinite(distance) || distance <= 0)
+      throw new Error(`Record ${index + 1} has an invalid time or distance. Correct it before exporting.`);
+    const meet = String(record.meet ?? "");
+    const slug = (value) => value.trim().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
+    const meetId = record.meetId || slug(/^\d{4}-\d{2}-\d{2}(?:[- _]|$)/.test(meet) ? meet : `${record.date}-${meet}`);
+    // Preserve all supplied IDs. Only older records without an ID need a
+    // deterministic fallback so Copy and Export produce identical documents.
+    let hash = 2166136261;
+    for (const character of JSON.stringify([record.date,record.course,distance,record.stroke,time,meet,index]))
+      hash = Math.imul(hash ^ character.charCodeAt(0),16777619) >>> 0;
+    return {
+      date: record.date,
+      year: Number(record.year ?? String(record.date).slice(0,4)),
+      stroke: record.stroke,
+      distance,
+      time,
+      meet,
+      age: record.age == null || record.age === "" ? null : Number(record.age),
+      id: record.id || `swim_${hash.toString(16).padStart(8,"0")}`,
+      meetId,
+      course: record.course,
+      legacyDistance: `${distance}${record.course === "SCY" ? "Y" : "M"}`
     };
-    var all = getRows();
-    if (editingId) {
-      var idx = -1;
-      for (var i = 0; i < all.length; i++) { if (all[i].id === editingId) { idx = i; break; } }
-      if (idx !== -1) {
-        data.id = editingId;
-        all[idx] = data;
-      }
-      saveRows(all);
-      $("saveMsg").textContent = "Result updated.";
-    } else {
-      data.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
-      all.push(data);
-      saveRows(all);
-      $("saveMsg").textContent = "Result saved.";
-    }
-    $("saveMsg").classList.remove("hide");
-    exitEditMode();
-    render();
-  });
-
-  function render() {
-    var all = getRows().sort(function (x, y) { return y.date.localeCompare(x.date); });
-    $("rows").innerHTML = all.length
-      ? all.map(function (r) {
-          var resultHtml = r.status === "DQ"
-            ? '<span class="badge dq">DQ</span>'
-            : fmt(r.time);
-          var notesHtml = r.notes
-            ? '<span title="' + escapeHtml(r.notes) + '">' + escapeHtml(truncate(r.notes, 28)) + "</span>"
-            : '<span class="muted">—</span>';
-          return "<tr><td>" + escapeHtml(r.date) + "</td><td>" + escapeHtml(r.swimmerName) + "</td>" +
-            "<td><span class=\"badge\">" + escapeHtml(courseName(r.course)) + "</span></td>" +
-            "<td>" + escapeHtml(r.distance) + " " + escapeHtml(r.stroke) + "</td>" +
-            "<td>" + resultHtml + "</td><td>" + escapeHtml(r.meet) + "</td>" +
-            "<td>" + notesHtml + "</td>" +
-            "<td class=\"actions\">" +
-            "<button class=\"secondary\" data-edit=\"" + r.id + "\">Edit</button>" +
-            "<button class=\"danger\" data-del=\"" + r.id + "\">Delete</button>" +
-            "</td></tr>";
-        }).join("")
-      : '<tr><td colspan="8" class="muted">No results entered yet.</td></tr>';
+  }) };
+}
+function sameDocument(a, b) {
+  return JSON.stringify(exportSwimmerDocument(a)) === JSON.stringify(exportSwimmerDocument(b));
+}
+async function loadAdminDocument(id, fresh = false) {
+  const { entry, doc: base } = await loadSwimmerSource(id, fresh);
+  let drafts, manual;
+  try {
+    drafts = stored(ADMIN_DRAFTS_KEY, {});
+    manual = stored(MANUAL_RESULTS_KEY, []);
+    const draft = drafts[id];
+    if (draft && (!draft.base || !draft.document || !draft.document.profile || !Array.isArray(draft.document.records)))
+      throw new Error("Invalid saved swimmer draft");
+  } catch (error) {
+    return { entry, base, document: clone(base), conflict: false, hasDraft: false,
+      storageWarning: `Saved browser changes could not be read (${error.message}). Showing the data file only. Editing and are disabled to protect saved changes. Check browser storage permissions or use another browser to access the source file.`, readOnly: true };
   }
+  const draft = drafts[id];
+  if (draft) {
+    const saved = sameDocument(base, draft.document);
+    const conflict = !saved && !sameDocument(base, draft.base);
+    return { entry, base, document: clone(saved ? base : draft.document), conflict, hasDraft: !saved };
+  }
+  // Carry forward earlier manual entries, but never duplicate an entry already
+  // copied into the source file. IDs alone are unreliable in older data.
+  const document = clone(base);
+  const known = new Set(document.records.map(signature));
+  for (const row of manual.filter((r) => r.swimmerId === id)) {
+    if (known.has(signature(row))) continue;
+    const { swimmerId, swimmerName, ...record } = row;
+    document.records.push(record);
+    known.add(signature(row));
+  }
+  return { entry, base, document, conflict: false,
+    hasDraft: document.records.length !== base.records.length };
+}
+function saveAdminDocument(id, base, document) {
+  const drafts = stored(ADMIN_DRAFTS_KEY, {});
+  drafts[id] = { base: clone(base), document: clone(document) };
+  // Persist first; quota/privacy errors must not claim the edit succeeded.
+  localStorage.setItem(ADMIN_DRAFTS_KEY, JSON.stringify(drafts));
+}
+function discardAdminDocument(id) {
+  const drafts = stored(ADMIN_DRAFTS_KEY, {});
+  delete drafts[id];
+  const manual = stored(MANUAL_RESULTS_KEY, []);
+  localStorage.setItem(MANUAL_RESULTS_KEY, JSON.stringify(manual.filter((r) => r.swimmerId !== id)));
+  localStorage.setItem(ADMIN_DRAFTS_KEY, JSON.stringify(drafts));
+}
+async function loadSwimmer(id) {
+  const state = await loadAdminDocument(id);
+  // Never silently apply an old complete draft over an externally changed file.
+  return state.conflict ? state.base : state.document;
+}
 
-  $("rows").addEventListener("click", function (e) {
-    var editId = e.target.getAttribute("data-edit");
-    var delId = e.target.getAttribute("data-del");
-    if (editId) {
-      var all = getRows();
-      for (var i = 0; i < all.length; i++) {
-        if (all[i].id === editId) { enterEditMode(all[i]); break; }
-      }
-    } else if (delId) {
-      if (confirm("Delete this result?")) {
-        saveRows(getRows().filter(function (r) { return r.id !== delId; }));
-        if (editingId === delId) exitEditMode();
-        render();
-      }
+const $ = (id) => document.getElementById(id);
+const escapeHtml = (s) => String(s ?? "").replace(/[&<>\'"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+const dq = (r) => r.status === "DQ" || r.time == null || String(r.time).toUpperCase() === "DQ";
+function fmt(time) {
+  const n = Math.round(Number(time) * 100);
+  if (!Number.isFinite(n)) return String(time ?? "");
+  const minutes = Math.floor(n / 6000), seconds = ((n % 6000) / 100).toFixed(2);
+  return minutes ? `${minutes}:${seconds.padStart(5, "0")}` : seconds;
+}
+function parseTime(value) {
+  const text = value.trim();
+  if (!/^(?:\d+:([0-5]\d)|\d+)(?:\.\d{1,2})?$/.test(text)) return NaN;
+  const parts = text.split(":");
+  return parts.length === 2 ? Number(parts[0]) * 60 + Number(parts[1]) : Number(text);
+}
+let state = null, editingIndex = null, page = 1, sortKey = "date", direction = -1, loading = false, loadToken = 0;
+let selectedId = "";
+function message(text, error = false) {
+  $("saveMsg").textContent = text;
+  $("saveMsg").classList.toggle("error", error);
+  $("saveMsg").classList.remove("hide");
+}
+function statusChanged() {
+  const disabled = $("status").value === "DQ";
+  $("time").disabled = disabled;
+  $("time").required = !disabled;
+  if (disabled) $("time").value = "";
+}
+function clearForm() {
+  editingIndex = null;
+  for (const id of ["date", "distance", "time", "meet", "age", "notes"]) $(id).value = "";
+  $("course").value = "SCM"; $("stroke").value = "Freestyle"; $("status").value = "TIME";
+  $("swimmerId").disabled = loading;
+  $("submitBtn").textContent = "Save result";
+  $("editingBanner").classList.add("hide"); $("cancelEditBtn").classList.add("hide");
+  statusChanged();
+}
+function render() {
+  const usable = !!state && !loading && !state.conflict && !state.readOnly;
+  for (const id of ["submitBtn", "exportBtn", "copyBtn"]) $(id).disabled = !usable;
+  $("reloadBtn").disabled = !state || loading || state.readOnly;
+  $("copyFallback").classList.add("hide");
+  if (!state) { $("rows").innerHTML = '<tr><td colspan="9">No swimmer data loaded.</td></tr>'; $("pageInfo").textContent = ""; return; }
+  $("filePath").textContent = `${state.entry.dataFile} · ${state.document.records.length} records · ${state.hasDraft ? "Browser changes pending export/replacement" : "Loaded from data file"}`;
+  const query = $("search").value.toLowerCase().trim(), course = $("courseFilter").value;
+  const matches = state.document.records.map((r, index) => ({r, index})).filter(({r}) =>
+    (!course || r.course === course) && (!query || [r.date,r.course,r.distance,r.stroke,dq(r)?"DQ":fmt(r.time),r.meet,r.age,r.notes].join(" ").toLowerCase().includes(query)));
+  matches.sort((a,b) => {
+    const v = (r) => sortKey === "time" ? (dq(r) ? Infinity : Number(r.time)) : r[sortKey];
+    const x=v(a.r), y=v(b.r);
+    const order = ["time","distance"].includes(sortKey) ? (x === y ? 0 : x < y ? -1 : 1) : String(x ?? "").localeCompare(String(y ?? ""), undefined, {numeric:true});
+    return direction * order || a.index-b.index;
+  });
+  const size = $("pageSize").value === "all" ? Math.max(1,matches.length) : Number($("pageSize").value);
+  const pages = Math.max(1,Math.ceil(matches.length/size)); page = Math.min(page,pages);
+  $("rows").innerHTML = matches.slice((page-1)*size,page*size).map(({r,index}) => `<tr>
+    <td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.course)}</td><td>${escapeHtml(r.distance)}</td><td>${escapeHtml(r.stroke)}</td>
+    <td>${dq(r)?'<span class="badge dq">DQ</span>':escapeHtml(fmt(r.time))}</td><td>${escapeHtml(r.meet)}</td><td>${escapeHtml(r.age)}</td><td>${escapeHtml(r.notes)}</td>
+    <td><div class="actions"><button type="button" class="secondary" data-edit="${index}" ${usable?"":"disabled"}>Edit</button><button type="button" class="danger" data-delete="${index}" ${usable?"":"disabled"}>Delete</button></div></td></tr>`).join("") || '<tr><td colspan="9">No matching records.</td></tr>';
+  $("pageInfo").textContent = `${matches.length ? (page-1)*size+1 : 0}–${Math.min(page*size,matches.length)} of ${matches.length} matching records · Page ${page} of ${pages}`;
+  $("previousBtn").disabled = page === 1; $("nextBtn").disabled = page === pages;
+}
+async function selectSwimmer() {
+  const token = ++loadToken; selectedId = $("swimmerId").value; state = null; loading = true;
+  $("loadError").classList.add("hide"); $("saveMsg").classList.add("hide");
+  $("swimmerName").value = $("swimmerId").selectedOptions[0]?.textContent || "";
+  $("filePath").textContent = "Loading swimmer data…";
+  clearForm(); render();
+  try {
+    const result = await loadAdminDocument(selectedId, true);
+    if (token !== loadToken) return;
+    state = result; page = 1;
+    if (state.storageWarning) {
+      $("loadError").textContent = state.storageWarning;
+      $("loadError").classList.remove("hide");
     }
-  });
-
-  $("exportBtn").addEventListener("click", function () {
-    var blob = new Blob([JSON.stringify(getRows(), null, 2)], { type: "application/json" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "swim-manual-results.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  render();
-})();
+    if (state.conflict) throw new Error("The data file changed since your browser draft was saved. Export is blocked to protect the newer file. Use Discard browser edits / reload file to load that file (this discards this swimmer's draft).");
+  } catch(error) {
+    if (token !== loadToken) return;
+    $("loadError").textContent = error.message + (state ? "" : " Serve the project over HTTP and check the swimmer dataFile path.");
+    $("loadError").classList.remove("hide");
+  } finally {
+    if (token === loadToken) { loading = false; clearForm(); render(); }
+  }
+}
+function commit(document) {
+  saveAdminDocument(selectedId, state.base, document);
+  state.document = document; state.hasDraft = true;
+}
+$("resultForm").addEventListener("submit", (e) => {
+  e.preventDefault(); if (!state || loading || state.conflict || state.readOnly) return;
+  const isDQ = $("status").value === "DQ", time = isDQ ? null : parseTime($("time").value);
+  if (!isDQ && (!Number.isFinite(time) || time <= 0)) { message("Enter a valid time such as 34.13 or 1:05.42 (seconds must be below 60 after a colon).", true); return; }
+  if (!$("meet").value.trim()) { message("Enter a meet name.", true); return; }
+  const document = clone(state.document), old = editingIndex === null ? null : document.records[editingIndex];
+  const record = { ...(old || {}), date: $("date").value, year:Number($("date").value.slice(0,4)), course:$("course").value,
+    distance:Number($("distance").value), stroke:$("stroke").value, status:isDQ?"DQ":"TIME", time,
+    meet:$("meet").value.trim(), age:$("age").value ? Number($("age").value) : null, notes:$("notes").value.trim() };
+  if (!old) { record.id = globalThis.crypto?.randomUUID?.() || `admin_${Date.now()}_${Math.random().toString(16).slice(2)}`; record.source = "admin"; }
+  if (Object.hasOwn(record,"legacyDistance")) record.legacyDistance = `${record.distance}${record.course === "SCY" ? "Y" : "M"}`;
+  if (old) document.records[editingIndex] = record; else document.records.push(record);
+  try { commit(document); clearForm(); render(); message(old ? "Result updated. Export the swimmer JSON to replace the data file." : "Result added. Export the swimmer JSON to replace the data file."); }
+  catch(error) { message(`Could not save browser changes: ${error.message}`,true); }
+});
+$("rows").addEventListener("click", (e) => {
+  const button = e.target.closest("button"); if (!button || !state || state.conflict || state.readOnly || loading) return;
+  if (button.hasAttribute("data-edit")) {
+    editingIndex = Number(button.dataset.edit); const r = state.document.records[editingIndex];
+    for (const id of ["date","course","distance","stroke","meet","age","notes"]) {
+      if (["course","stroke"].includes(id) && !Array.from($(id).options).some((o) => o.value === r[id])) $(id).add(new Option(r[id],r[id]));
+      $(id).value = r[id] ?? "";
+    }
+    $("status").value = dq(r) ? "DQ" : "TIME"; statusChanged(); if (!dq(r)) $("time").value = fmt(r.time);
+    $("swimmerId").disabled = true; $("submitBtn").textContent = "Update result";
+    $("editingBanner").classList.remove("hide"); $("cancelEditBtn").classList.remove("hide");
+    $("saveMsg").classList.add("hide"); window.scrollTo({top:0,behavior:"smooth"});
+  } else if (button.hasAttribute("data-delete")) {
+    const index = Number(button.dataset.delete), r = state.document.records[index];
+    if (!confirm(`Delete ${r.date} ${r.distance} ${r.stroke} at ${r.meet}? Export the JSON to make this deletion permanent in the data file.`)) return;
+    const document = clone(state.document); document.records.splice(index,1);
+    try { commit(document); clearForm(); render(); message("Result deleted from browser draft. Export to replace the data file."); }
+    catch(error) { message(`Could not delete result: ${error.message}`,true); }
+  }
+});
+function exportText() { return JSON.stringify(exportSwimmerDocument(state.document),null,2) + "\n"; }
+function canExport() {
+  if (!state || loading || state.conflict || state.readOnly) return false;
+  if (editingIndex !== null) { message("Update result or cancel your edit before exporting.",true); return false; }
+  try { exportText(); }
+  catch (error) { message(error.message, true); return false; }
+  return true;
+}
+$("exportBtn").addEventListener("click", () => {
+  if (!canExport()) return;
+  const url = URL.createObjectURL(new Blob([exportText()],{type:"application/json"}));
+  const a = document.createElement("a"); a.href=url; a.download=state.entry.dataFile.split("/").pop();
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
+  message(`Exported complete swimmer document. Replace ${state.entry.dataFile} with this file. Browser edits remain until you discard/reload them.`);
+});
+$("copyBtn").addEventListener("click", async () => {
+  if (!canExport()) return;
+  try { await navigator.clipboard.writeText(exportText()); message(`Copied complete JSON. Paste it over the entire contents of ${state.entry.dataFile}.`); }
+  catch { $("jsonPreview").value=exportText(); $("copyFallback").classList.remove("hide"); $("jsonPreview").focus(); $("jsonPreview").select(); message("Select and copy the JSON shown below."); }
+});
+$("reloadBtn").addEventListener("click", async () => {
+  if (!state || !confirm("Discard all browser changes for this swimmer and reload their current data file? First replace the file if you want to keep your exported corrections.")) return;
+  try { discardAdminDocument(selectedId); await selectSwimmer(); }
+  catch(error) { message(`Could not discard browser edits: ${error.message}`,true); }
+});
+$("swimmerId").addEventListener("change",selectSwimmer);
+$("status").addEventListener("change",statusChanged);
+$("cancelEditBtn").addEventListener("click",clearForm);
+$("resultForm").addEventListener("reset",(e) => { e.preventDefault(); clearForm(); });
+for (const id of ["search","courseFilter","pageSize"]) $(id).addEventListener(id === "search" ? "input" : "change",() => { page=1; render(); });
+for (const button of document.querySelectorAll("[data-sort]")) button.addEventListener("click",() => {
+  direction = sortKey === button.dataset.sort ? -direction : 1; sortKey=button.dataset.sort; page=1;
+  for (const b of document.querySelectorAll("[data-sort]")) b.parentElement.removeAttribute("aria-sort");
+  button.parentElement.setAttribute("aria-sort",direction===1?"ascending":"descending"); render();
+});
+$("previousBtn").addEventListener("click",() => { page--; render(); });
+$("nextBtn").addEventListener("click",() => { page++; render(); });
+async function initialize() {
+  $("loadError").classList.add("hide");
+  if (window.location.protocol === "file:") {
+    $("swimmerId").innerHTML = '<option value="">Open through the local server</option>';
+    $("loadError").textContent = "This page cannot load data when opened by double-clicking the HTML file. Start serve.bat in the project folder, then open http://localhost:8000/admin.html.";
+    $("loadError").classList.remove("hide");
+    return;
+  }
+  const previousId = $("swimmerId").value;
+  state = null; loading = true; clearForm(); render();
+  $("retryLoadBtn").disabled = true;
+  $("filePath").textContent = "Loading data/swimmers.json…";
+  try {
+    jsonCache.clear();
+    const directory = await loadDirectory();
+    $("swimmerId").innerHTML = directory.swimmers.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name || s.id)}</option>`).join("");
+    if (!directory.swimmers.length) throw new Error("No swimmers found in data/swimmers.json.");
+    if (directory.swimmers.some((s) => s.id === previousId)) $("swimmerId").value = previousId;
+    await selectSwimmer();
+  } catch(error) {
+    $("swimmerId").innerHTML = '<option value="">Unable to load swimmers — use Reload</option>';
+    $("swimmerName").value = "";
+    $("filePath").textContent = "Swimmer directory could not be loaded.";
+    $("loadError").textContent = error.message + " Serve the project folder that contains admin.html and data/swimmers.json over HTTP, then click Reload swimmers and data.";
+    $("loadError").classList.remove("hide");
+  } finally {
+    loading = false; clearForm(); render(); $("retryLoadBtn").disabled = false;
+  }
+}
+$("retryLoadBtn").addEventListener("click", () => {
+  if (editingIndex !== null && !confirm("Discard the unsaved form changes and reload swimmers? Saved browser records will be kept.")) return;
+  initialize();
+});
+render();
+await initialize();
+})().catch((error) => {
+  const banner = document.getElementById("loadError");
+  banner.textContent = "Admin could not start: " + error.message;
+  banner.classList.remove("hide");
+});
 </script>
 </body></html>

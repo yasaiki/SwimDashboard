@@ -1,11 +1,11 @@
-import { loadAppConfig, loadDashboardData } from "./data-service.js";
+import { loadAppConfig, loadDashboardData } from "./data-service.js?v=saved-file-refresh-v1";
 import {
   STROKE_ORDER, compareRows, currentAge, distanceSortValue, eventLabel,
   firstRecord, formatDate, formatSwimTime, formatTimeOnly, isDQ,
   latestRecord, pbMap, courseLabel, unique,
-} from "./utils.js";
-import { badgeHtml, evaluateStandard, getAgeBracket, getStandardTable } from "./standards.js";
-import { renderPBProgress, renderProgressChart, renderRadar, resizeCharts } from "./charts.js";
+} from "./utils.js?v=saved-file-refresh-v1";
+import { badgeHtml, evaluateStandard, getAgeBracket, getStandardTable } from "./standards.js?v=saved-file-refresh-v1";
+import { renderPBProgress, renderProgressChart, renderRadar, resizeCharts } from "./charts.js?v=saved-file-refresh-v1";
 
 let swimmerDoc, profile, records = [], goals = [], standards, directory;
 let sortState = { field: "date", direction: "desc" }, historyPage = 1, historyPageSize = 25;
@@ -122,9 +122,11 @@ function goalProgress(g, source) {
 }
 
 function buildFilters() {
+  const previousYear = $("year").value;
   const years = unique(records.map((r) => r.year)).sort((a, b) => b - a);
   $("year").innerHTML = '<option value="All">All years</option>' +
     years.map((y) => `<option value="${y}">${y}</option>`).join("");
+  $("year").value = years.some((year) => String(year) === previousYear) ? previousYear : "All";
   buildDistanceFilter();
 }
 function buildDistanceFilter() {
@@ -329,17 +331,55 @@ function setupEvents() {
     }));
 }
 
-try {
-  const params = new URLSearchParams(location.search), cfg = await loadAppConfig();
-  let id = params.get("swimmer") || cfg.defaultSwimmerId;
-  ({ swimmer: swimmerDoc, goals, standards, directory } = await loadDashboardData(id));
-  profile = swimmerDoc.profile;
-  records = swimmerDoc.records || [];
-  renderHeader(); buildFilters(); setupEvents(); renderAll();
-  $("loading").classList.add("hide");
-  $("app").classList.remove("hide");
-} catch (e) {
-  $("loading").classList.add("hide");
-  $("error").textContent = `${e.message}. If you opened the HTML directly, start the included local server and open the http://localhost address instead.`;
-  $("error").classList.remove("hide");
+// Reload only from the saved JSON. Drafts stay in admin until the user exports
+// and replaces that file. All renderers use the same refreshed records array.
+let initialized = false, refreshInFlight = null, lastFingerprint = "", lastLoadedAt = null;
+async function refreshDashboard() {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    $("refreshData").disabled = true;
+    $("dataStatus").textContent = "Checking saved swimmer data…";
+    if (!initialized) $("loading").classList.remove("hide");
+    try {
+      const params = new URLSearchParams(location.search), cfg = await loadAppConfig();
+      const id = params.get("swimmer") || cfg.defaultSwimmerId;
+      const data = await loadDashboardData(id);
+      const fingerprint = JSON.stringify(data);
+      if (!initialized || fingerprint !== lastFingerprint) {
+        const swimmerChanged = initialized && profile.id !== data.swimmer.profile.id;
+        ({ swimmer: swimmerDoc, goals, standards, directory } = data);
+        profile = swimmerDoc.profile;
+        records = swimmerDoc.records || [];
+        if (swimmerChanged) {
+          for (const field of ["year", "stroke", "course", "distance"]) $(field).value = "All";
+          historyPage = 1;
+        }
+        renderHeader(); buildFilters(); renderAll();
+        lastFingerprint = fingerprint;
+      }
+      initialized = true;
+      lastLoadedAt = new Date();
+      $("dataStatus").textContent = `${data.dataFile} · ${records.length} records · Checked ${lastLoadedAt.toLocaleTimeString()}`;
+      $("error").classList.add("hide");
+      $("app").classList.remove("hide");
+    } catch (error) {
+      $("error").textContent = `${error.message}. ${initialized ? "Keeping the last successfully loaded view. " : ""}Check your local server and data file path, then use Refresh data to retry.`;
+      $("error").classList.remove("hide");
+      $("dataStatus").textContent = lastLoadedAt
+        ? `Refresh failed · Showing data checked at ${lastLoadedAt.toLocaleTimeString()}`
+        : "Saved swimmer data could not be loaded.";
+    } finally {
+      $("loading").classList.add("hide");
+      $("refreshData").disabled = false;
+    }
+  })();
+  try { await refreshInFlight; }
+  finally { refreshInFlight = null; }
 }
+setupEvents();
+$("refreshData").addEventListener("click", refreshDashboard);
+window.addEventListener("focus", () => { if (!document.hidden) refreshDashboard(); });
+window.addEventListener("pageshow", (event) => { if (event.persisted) refreshDashboard(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshDashboard(); });
+setInterval(() => { if (!document.hidden) refreshDashboard(); }, 30000);
+await refreshDashboard();
