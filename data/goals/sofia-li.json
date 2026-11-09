@@ -4,7 +4,7 @@
     {
       "stroke": "Freestyle",
       "distance": 25,
-      "target": 26.5,
+      "target": 20.55,
       "label": "Next Goal",
       "course": "SCM",
       "legacyDistance": "25M"
@@ -12,7 +12,7 @@
     {
       "stroke": "Back Stroke",
       "distance": 25,
-      "target": 29.5,
+      "target": 25.45,
       "label": "Next Goal",
       "course": "SCM",
       "legacyDistance": "25M"
@@ -20,7 +20,7 @@
     {
       "stroke": "Breast Stroke",
       "distance": 25,
-      "target": 34,
+      "target": 29.40,
       "label": "Development Goal",
       "course": "SCM",
       "legacyDistance": "25M"
@@ -28,7 +28,7 @@
     {
       "stroke": "Butterfly",
       "distance": 25,
-      "target": 32,
+      "target": 25.20,
       "label": "Development Goal",
       "course": "SCM",
       "legacyDistance": "25M"
