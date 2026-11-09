@@ -13,6 +13,45 @@
     "sourcePdf": "Swimmer Stats – Noah.pdf"
   },
   "records": [
+     {
+      "date": "2026-11-08",
+      "year": 2026,
+      "stroke": "Butterfly",
+      "distance": 50,
+      "time": 30.18,
+      "meet": "2026 FXFX Loughmiller Memorial Invitational",
+      "age": 12,
+      "id": "4342c97b-a2f3-445b-a8d0-f3f45225775e",
+      "meetId": "2026-11-08-2026-FXFX-Loughmiller-Memorial-Invitational",
+      "course": "SCY",
+      "legacyDistance": "50Y"
+    },
+    {
+      "date": "2026-11-08",
+      "year": 2026,
+      "stroke": "Back Stroke",
+      "distance": 100,
+      "time": "DQ",
+      "meet": "2026 FXFX Loughmiller Memorial Invitational",
+      "age": 12,
+      "id": "49b83845-f34e-4044-af20-af8b2615da22",
+      "meetId": "2026-11-08-2026-FXFX-Loughmiller-Memorial-Invitational",
+      "course": "SCY",
+      "legacyDistance": "100Y"
+    },
+    {
+      "date": "2026-11-08",
+      "year": 2026,
+      "stroke": "Freestyle",
+      "distance": 50,
+      "time": 29.25,
+      "meet": "2026 FXFX Loughmiller Memorial Invitational",
+      "age": 12,
+      "id": "ccb2e7af-f082-4f02-b95f-0a42cb736259",
+      "meetId": "2026-11-08-2026-FXFX-Loughmiller-Memorial-Invitational",
+      "course": "SCY",
+      "legacyDistance": "50Y"
+    },
     {
       "date": "2026-10-17",
       "year": 2026,

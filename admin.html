@@ -29,7 +29,7 @@ input[readonly]{background:#f1f5f8;color:#445}
 
 <section class="card">
 <h1 style="margin:0 0 8px">Enter Swimmer Result</h1>
-<div class="muted" style="margin-bottom:14px">Choose the course used for this result. Pick "DQ" instead of a time to record a disqualification.</div>
+<div class="muted" style="margin-bottom:14px">Choose the course used for this result. Enter "DQ" in the Time field or choose "DQ — Disqualified" under Result Status to record a disqualification without a time.</div>
 <div id="editingBanner" class="editing-banner hide">Editing an existing result. <strong>Update result</strong> will save your changes, or <strong>Cancel edit</strong> to discard them.</div>
 <form id="resultForm">
 <div class="grid">
@@ -46,7 +46,7 @@ input[readonly]{background:#f1f5f8;color:#445}
 <div class="field"><label>Distance</label><input id="distance" type="number" min="25" step="25" required></div>
 <div class="field"><label>Stroke</label><select id="stroke"><option>Freestyle</option><option>Back Stroke</option><option>Breast Stroke</option><option>Butterfly</option><option>Individual Medley</option></select></div>
 <div class="field"><label>Result Status</label><select id="status"><option value="TIME">Time</option><option value="DQ">DQ — Disqualified</option></select></div>
-<div class="field"><label>Time</label><input id="time" placeholder="e.g. 34.13 or 1:05.42"></div>
+<div class="field"><label for="time">Time or DQ</label><input id="time" placeholder="e.g. 34.12, 1:05.42, or DQ"></div>
 <div class="field"><label>Meet</label><input id="meet" required></div>
 <div class="field"><label>Age</label><input id="age" type="number" min="4" max="99"></div>
 </div>
@@ -331,8 +331,10 @@ function commit(document) {
 }
 $("resultForm").addEventListener("submit", (e) => {
   e.preventDefault(); if (!state || loading || state.conflict || state.readOnly) return;
-  const isDQ = $("status").value === "DQ", time = isDQ ? null : parseTime($("time").value);
-  if (!isDQ && (!Number.isFinite(time) || time <= 0)) { message("Enter a valid time such as 34.13 or 1:05.42 (seconds must be below 60 after a colon).", true); return; }
+  const timeText = $("time").value.trim();
+  const isDQ = $("status").value === "DQ" || timeText.toUpperCase() === "DQ";
+  const time = isDQ ? null : parseTime(timeText);
+  if (!isDQ && (!Number.isFinite(time) || time <= 0)) { message("Enter DQ or a valid time such as 34.12 or 1:05.42 (seconds must be below 60 after a colon).", true); return; }
   if (!$("meet").value.trim()) { message("Enter a meet name.", true); return; }
   const document = clone(state.document), old = editingIndex === null ? null : document.records[editingIndex];
   const record = { ...(old || {}), date: $("date").value, year:Number($("date").value.slice(0,4)), course:$("course").value,

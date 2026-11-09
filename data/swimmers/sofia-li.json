@@ -7,26 +7,79 @@
     "gender": "F",
     "birthDate": null,
     "currentAge": 7,
-    "team": null,
+    "team": "RMSC",
     "active": true,
     "sourceUrl": "https://reachforthewall.org/swimmer-stats/?sid=Li,Sofia381062500",
     "sourcePdf": "Swimmer Stats – Sofia.pdf"
   },
   "records": [
-      {
-      "date": "2026-10-11",
-      "year": 2026,
-      "stroke": "Back Stroke",
-      "distance": 25,
-      "time": 28.30,
-      "meet": "RMSC Eat N Meet",
-      "age": 7,
-      "id": "swim_d3461e31004f",
-      "meetId": "2026-10-11-Eat-N-Meet",
-      "course": "SCY",
-      "legacyDistance": "25Y"
-    },
-       {
+  {
+    "date": "2026-11-07",
+    "year": 2026,
+    "stroke": "Freestyle",
+    "distance": 50,
+    "time": 58.67,
+    "meet": "2026-11-07-Autumn Mini Meet",
+    "age": 7,
+    "id": "8d274598-9f92-4c55-932b-59b06623b5ce",
+    "meetId": "2026-11-07-Autumn-Mini-Meet",
+    "course": "SCY",
+    "legacyDistance": "50Y"
+  },
+  {
+    "date": "2026-11-07",
+    "year": 2026,
+    "stroke": "Back Stroke",
+    "distance": 25,
+    "time": 25.90,
+    "meet": "2026-11-07-Autumn Mini Meet",
+    "age": 7,
+    "id": "53e715ec-2cc7-483b-982c-c9ade70648de",
+    "meetId": "2026-11-07-Autumn-Mini-Meet",
+    "course": "SCY",
+    "legacyDistance": "25Y"
+  },
+  {
+    "date": "2026-11-08",
+    "year": 2026,
+    "stroke": "Freestyle",
+    "distance": 25,
+    "time": 26.02,
+    "meet": "2026-11-07-Autumn Mini Meet",
+    "age": 7,
+    "id": "a262a904-d28f-4125-8ba1-5bd56568ac0a",
+    "meetId": "2026-11-07-Autumn-Mini-Meet",
+    "course": "SCY",
+    "legacyDistance": "25Y"
+  },
+  {
+    "date": "2026-11-08",
+    "year": 2026,
+    "stroke": "Breast Stroke",
+    "distance": 25,
+    "time": 37.64,
+    "meet": "2026-11-07-Autumn Mini Meet",
+    "age": 7,
+    "id": "02963674-2bfd-46e3-816e-83212b8a5d98",
+    "meetId": "2026-11-07-Autumn-Mini-Meet",
+    "course": "SCY",
+    "legacyDistance": "25Y"
+  },
+  {
+    "date": "2026-11-08",
+    "year": 2026,
+    "stroke": "Back Stroke",
+    "distance": 50,
+    "time": 60.10,
+    "meet": "2026-11-07-Autumn Mini Meet",
+    "age": 7,
+    "id": "331a69f2-ad4a-4722-9dcb-a95579f89a92",
+    "meetId": "2026-11-07-Autumn-Mini-Meet",
+    "course": "SCY",
+    "legacyDistance": "50Y"
+  }
+,
+    {
       "date": "2026-10-11",
       "year": 2026,
       "stroke": "Breast Stroke",
@@ -39,7 +92,7 @@
       "course": "SCY",
       "legacyDistance": "25Y"
     },
-           {
+    {
       "date": "2026-10-11",
       "year": 2026,
       "stroke": "Freestyle",
